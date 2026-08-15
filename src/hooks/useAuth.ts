@@ -25,11 +25,27 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithEmail = useCallback(async (email: string) => {
-    const { error } = await getSupabaseClient().auth.signInWithOtp({
+  const signUpWithPassword = useCallback(async (email: string, password: string) => {
+    const { error } = await getSupabaseClient().auth.signUp({
       email,
+      password,
+    });
+    return { error: error?.message ?? null };
+  }, []);
+
+  const signInWithPassword = useCallback(async (email: string, password: string) => {
+    const { error } = await getSupabaseClient().auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { error: error?.message ?? null };
+  }, []);
+
+  const signInWithGoogle = useCallback(async () => {
+    const { error } = await getSupabaseClient().auth.signInWithOAuth({
+      provider: "google",
       options: {
-        emailRedirectTo:
+        redirectTo:
           typeof window !== "undefined" ? window.location.origin : undefined,
       },
     });
@@ -40,5 +56,13 @@ export function useAuth() {
     await getSupabaseClient().auth.signOut();
   }, []);
 
-  return { session, user: session?.user ?? null, loaded, signInWithEmail, signOut };
+  return {
+    session,
+    user: session?.user ?? null,
+    loaded,
+    signUpWithPassword,
+    signInWithPassword,
+    signInWithGoogle,
+    signOut,
+  };
 }
