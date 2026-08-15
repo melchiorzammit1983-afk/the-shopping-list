@@ -3,5 +3,5 @@ export type ShoppingItem = {
   name: string;
   quantity: number;
   done: boolean;
-  createdAt: number;
+  created_at: string;
 };
