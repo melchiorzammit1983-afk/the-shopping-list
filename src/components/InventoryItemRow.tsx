@@ -1,14 +1,14 @@
 "use client";
 
-import type { ShoppingItem } from "@/types/shopping-list";
+import type { InventoryItem } from "@/types/inventory";
 
 type Props = {
-  item: ShoppingItem;
+  item: InventoryItem;
   onToggle: (id: string) => void;
   onRemove: (id: string) => void;
 };
 
-export function ShoppingListItemRow({ item, onToggle, onRemove }: Props) {
+export function InventoryItemRow({ item, onToggle, onRemove }: Props) {
   return (
     <li className="group flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-black/[.03] dark:hover:bg-white/[.05]">
       <input
@@ -23,7 +23,17 @@ export function ShoppingListItemRow({ item, onToggle, onRemove }: Props) {
         }`}
       >
         {item.name}
+        {item.brand && (
+          <span className="ml-1 text-black/40 dark:text-white/40">
+            ({item.brand})
+          </span>
+        )}
       </span>
+      {item.nutri_score && (
+        <span className="rounded bg-black/[.06] px-1.5 py-0.5 text-[10px] font-semibold uppercase dark:bg-white/[.1]">
+          {item.nutri_score}
+        </span>
+      )}
       {item.quantity > 1 && (
         <span className="text-xs text-black/40 dark:text-white/40">
           ×{item.quantity}
