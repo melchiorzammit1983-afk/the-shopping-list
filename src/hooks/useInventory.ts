@@ -57,8 +57,9 @@ export function useInventory(householdId: string | null, addedByName: string | n
           household_id: householdId,
           added_by_name: addedByName,
         });
+      await refresh();
     },
-    [householdId, addedByName]
+    [householdId, addedByName, refresh]
   );
 
   const toggleItem = useCallback(
@@ -69,13 +70,18 @@ export function useInventory(householdId: string | null, addedByName: string | n
         .from("inventory_items")
         .update({ done: !item.done })
         .eq("id", id);
+      await refresh();
     },
-    [items]
+    [items, refresh]
   );
 
-  const removeItem = useCallback(async (id: string) => {
-    await getSupabaseClient().from("inventory_items").delete().eq("id", id);
-  }, []);
+  const removeItem = useCallback(
+    async (id: string) => {
+      await getSupabaseClient().from("inventory_items").delete().eq("id", id);
+      await refresh();
+    },
+    [refresh]
+  );
 
   const clearDone = useCallback(async () => {
     if (!householdId) return;
@@ -84,7 +90,8 @@ export function useInventory(householdId: string | null, addedByName: string | n
       .delete()
       .eq("household_id", householdId)
       .eq("done", true);
-  }, [householdId]);
+    await refresh();
+  }, [householdId, refresh]);
 
   return { items, loaded, addItem, toggleItem, removeItem, clearDone };
 }
