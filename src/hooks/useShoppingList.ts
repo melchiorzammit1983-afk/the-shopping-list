@@ -1,65 +1,65 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import type { ShoppingItem } from "@/types/shopping-list";
-
-const STORAGE_KEY = "shopping-list:items";
-
-function loadItems(): ShoppingItem[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as ShoppingItem[]) : [];
-  } catch {
-    return [];
-  }
-}
 
 export function useShoppingList() {
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  // localStorage isn't available during SSR, so items are hydrated from it
-  // on mount rather than in the initial render (which would mismatch SSR output).
+  const refresh = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("shopping_items")
+      .select("*")
+      .order("created_at", { ascending: true });
+    if (!error && data) setItems(data);
+  }, []);
+
+  // Data lives in Supabase, not React state, so the initial load and every
+  // realtime update both happen in effects rather than during render.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setItems(loadItems());
-    setLoaded(true);
-  }, []);
+    refresh().then(() => setLoaded(true));
 
-  useEffect(() => {
-    if (!loaded) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items, loaded]);
+    const channel = supabase
+      .channel("shopping_items_changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shopping_items" },
+        () => refresh()
+      )
+      .subscribe();
 
-  const addItem = useCallback((name: string, quantity: number) => {
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refresh]);
+
+  const addItem = useCallback(async (name: string, quantity: number) => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    setItems((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        name: trimmed,
-        quantity,
-        done: false,
-        createdAt: Date.now(),
-      },
-    ]);
+    await supabase.from("shopping_items").insert({ name: trimmed, quantity });
   }, []);
 
-  const toggleItem = useCallback((id: string) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, done: !item.done } : item
-      )
-    );
+  const toggleItem = useCallback(
+    async (id: string) => {
+      const item = items.find((i) => i.id === id);
+      if (!item) return;
+      await supabase
+        .from("shopping_items")
+        .update({ done: !item.done })
+        .eq("id", id);
+    },
+    [items]
+  );
+
+  const removeItem = useCallback(async (id: string) => {
+    await supabase.from("shopping_items").delete().eq("id", id);
   }, []);
 
-  const removeItem = useCallback((id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-  }, []);
-
-  const clearDone = useCallback(() => {
-    setItems((prev) => prev.filter((item) => !item.done));
+  const clearDone = useCallback(async () => {
+    await supabase.from("shopping_items").delete().eq("done", true);
   }, []);
 
   return { items, loaded, addItem, toggleItem, removeItem, clearDone };
