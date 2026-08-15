@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useInventory } from "@/hooks/useInventory";
-import { AddItemForm } from "./AddItemForm";
+import { AddItemModal } from "./AddItemModal";
 import { InventoryItemRow } from "./InventoryItemRow";
 import { CATEGORIES, CATEGORY_LABELS } from "@/types/inventory";
 import type { Household } from "@/types/household";
@@ -19,12 +20,13 @@ export function InventoryApp({
 }: Props) {
   const { items, loaded, addItem, toggleItem, removeItem, clearDone } =
     useInventory(household.id, identityName);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const remaining = items.filter((item) => !item.done);
   const done = items.filter((item) => item.done);
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-10">
+    <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-10 pb-24">
       <header className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold">{household.name}</h1>
@@ -47,11 +49,9 @@ export function InventoryApp({
         </button>
       </header>
 
-      <AddItemForm onAdd={addItem} />
-
       {loaded && items.length === 0 && (
         <p className="text-sm text-black/40 dark:text-white/40">
-          Your household inventory is empty. Add something above.
+          Your household inventory is empty. Tap + to add something.
         </p>
       )}
 
@@ -103,6 +103,21 @@ export function InventoryApp({
             ))}
           </ul>
         </div>
+      )}
+
+      <button
+        onClick={() => setShowAddModal(true)}
+        aria-label="Add item"
+        className="fixed bottom-6 right-6 z-30 flex size-14 items-center justify-center rounded-full bg-foreground text-2xl leading-none text-background shadow-lg transition-opacity hover:opacity-90"
+      >
+        +
+      </button>
+
+      {showAddModal && (
+        <AddItemModal
+          onAdd={addItem}
+          onClose={() => setShowAddModal(false)}
+        />
       )}
     </div>
   );
