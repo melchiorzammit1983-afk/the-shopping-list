@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
 import type { ShoppingItem } from "@/types/shopping-list";
 
 export function useShoppingList() {
@@ -9,7 +9,7 @@ export function useShoppingList() {
   const [loaded, setLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from("shopping_items")
       .select("*")
       .order("created_at", { ascending: true });
@@ -22,6 +22,7 @@ export function useShoppingList() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh().then(() => setLoaded(true));
 
+    const supabase = getSupabaseClient();
     const channel = supabase
       .channel("shopping_items_changes")
       .on(
@@ -39,14 +40,16 @@ export function useShoppingList() {
   const addItem = useCallback(async (name: string, quantity: number) => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    await supabase.from("shopping_items").insert({ name: trimmed, quantity });
+    await getSupabaseClient()
+      .from("shopping_items")
+      .insert({ name: trimmed, quantity });
   }, []);
 
   const toggleItem = useCallback(
     async (id: string) => {
       const item = items.find((i) => i.id === id);
       if (!item) return;
-      await supabase
+      await getSupabaseClient()
         .from("shopping_items")
         .update({ done: !item.done })
         .eq("id", id);
@@ -55,11 +58,14 @@ export function useShoppingList() {
   );
 
   const removeItem = useCallback(async (id: string) => {
-    await supabase.from("shopping_items").delete().eq("id", id);
+    await getSupabaseClient().from("shopping_items").delete().eq("id", id);
   }, []);
 
   const clearDone = useCallback(async () => {
-    await supabase.from("shopping_items").delete().eq("done", true);
+    await getSupabaseClient()
+      .from("shopping_items")
+      .delete()
+      .eq("done", true);
   }, []);
 
   return { items, loaded, addItem, toggleItem, removeItem, clearDone };
