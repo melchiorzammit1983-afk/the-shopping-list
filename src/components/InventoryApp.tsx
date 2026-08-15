@@ -1,7 +1,6 @@
 "use client";
 
 import { useInventory } from "@/hooks/useInventory";
-import { useAuth } from "@/hooks/useAuth";
 import { AddItemForm } from "./AddItemForm";
 import { InventoryItemRow } from "./InventoryItemRow";
 import { CATEGORIES, CATEGORY_LABELS } from "@/types/inventory";
@@ -9,12 +8,17 @@ import type { Household } from "@/types/household";
 
 type Props = {
   household: Household;
+  identityName: string;
+  onLeaveHousehold: () => void;
 };
 
-export function InventoryApp({ household }: Props) {
-  const { signOut } = useAuth();
+export function InventoryApp({
+  household,
+  identityName,
+  onLeaveHousehold,
+}: Props) {
   const { items, loaded, addItem, toggleItem, removeItem, clearDone } =
-    useInventory(household.id);
+    useInventory(household.id, identityName);
 
   const remaining = items.filter((item) => !item.done);
   const done = items.filter((item) => item.done);
@@ -36,10 +40,10 @@ export function InventoryApp({ household }: Props) {
           </p>
         </div>
         <button
-          onClick={signOut}
+          onClick={onLeaveHousehold}
           className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
         >
-          Sign out
+          Switch household
         </button>
       </header>
 

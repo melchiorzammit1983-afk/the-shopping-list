@@ -2,11 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
-import { useAuth } from "@/hooks/useAuth";
 import type { InventoryItem, NewInventoryItem } from "@/types/inventory";
 
-export function useInventory(householdId: string | null) {
-  const { user } = useAuth();
+export function useInventory(householdId: string | null, addedByName: string | null) {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -57,10 +55,10 @@ export function useInventory(householdId: string | null) {
         .insert({
           ...newItem,
           household_id: householdId,
-          added_by: user?.id ?? null,
+          added_by_name: addedByName,
         });
     },
-    [householdId, user]
+    [householdId, addedByName]
   );
 
   const toggleItem = useCallback(

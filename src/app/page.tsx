@@ -1,19 +1,38 @@
 "use client";
 
-import { useAuth } from "@/hooks/useAuth";
+import { useIdentity } from "@/hooks/useIdentity";
 import { useHousehold } from "@/hooks/useHousehold";
-import { SignIn } from "@/components/SignIn";
+import { WhoAreYou } from "@/components/WhoAreYou";
 import { HouseholdSetup } from "@/components/HouseholdSetup";
 import { InventoryApp } from "@/components/InventoryApp";
 
 export default function Home() {
-  const { user, loaded: authLoaded } = useAuth();
-  const { household, loaded: householdLoaded } = useHousehold();
+  const { name, loaded: identityLoaded, setIdentity } = useIdentity();
+  const {
+    household,
+    loaded: householdLoaded,
+    createHousehold,
+    joinHousehold,
+    leaveHousehold,
+  } = useHousehold(name);
 
-  if (!authLoaded) return null;
-  if (!user) return <SignIn />;
+  if (!identityLoaded) return null;
+  if (!name) return <WhoAreYou setIdentity={setIdentity} />;
   if (!householdLoaded) return null;
-  if (!household) return <HouseholdSetup />;
+  if (!household) {
+    return (
+      <HouseholdSetup
+        createHousehold={createHousehold}
+        joinHousehold={joinHousehold}
+      />
+    );
+  }
 
-  return <InventoryApp household={household} />;
+  return (
+    <InventoryApp
+      household={household}
+      identityName={name}
+      onLeaveHousehold={leaveHousehold}
+    />
+  );
 }

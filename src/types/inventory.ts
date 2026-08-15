@@ -42,7 +42,7 @@ export type InventoryItem = {
   nutrition: NutritionInfo | null;
   nutri_score: string | null;
   done: boolean;
-  added_by: string | null;
+  added_by_name: string | null;
   created_at: string;
 };
 

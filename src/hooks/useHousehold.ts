@@ -2,67 +2,75 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
-import { useAuth } from "@/hooks/useAuth";
 import type { Household } from "@/types/household";
 
-export function useHousehold() {
-  const { user } = useAuth();
+const STORAGE_KEY = "household:current_id";
+
+export function useHousehold(identityName: string | null) {
   const [household, setHousehold] = useState<Household | null>(null);
   const [loaded, setLoaded] = useState(false);
 
-  const refresh = useCallback(async () => {
-    if (!user) {
-      setHousehold(null);
-      return;
-    }
+  const loadById = useCallback(async (id: string) => {
     const { data, error } = await getSupabaseClient()
-      .from("household_members")
-      .select("household:households(id, name, created_at, created_by)")
-      .eq("user_id", user.id)
-      .limit(1)
+      .from("households")
+      .select("id, name, created_at, created_by_name")
+      .eq("id", id)
       .maybeSingle();
     if (!error && data) {
-      const row = data as unknown as { household: Household };
-      setHousehold(row.household);
-    } else {
-      setHousehold(null);
+      setHousehold(data);
+      return true;
     }
-  }, [user]);
+    return false;
+  }, []);
 
+  // localStorage isn't available during SSR, so the stored household ID is
+  // read and resolved on mount rather than in the initial render.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    refresh().then(() => setLoaded(true));
-  }, [refresh]);
+    const storedId = window.localStorage.getItem(STORAGE_KEY);
+    if (!storedId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLoaded(true);
+      return;
+    }
+    loadById(storedId).then((found) => {
+      if (!found) window.localStorage.removeItem(STORAGE_KEY);
+      setLoaded(true);
+    });
+  }, [loadById]);
 
   const createHousehold = useCallback(
     async (name: string) => {
-      if (!user) return { error: "Not signed in" };
       const trimmed = name.trim();
       if (!trimmed) return { error: "Name is required" };
-      const { error } = await getSupabaseClient()
+      const { data, error } = await getSupabaseClient()
         .from("households")
-        .insert({ name: trimmed, created_by: user.id });
-      if (error) return { error: error.message };
-      await refresh();
+        .insert({ name: trimmed, created_by_name: identityName })
+        .select("id, name, created_at, created_by_name")
+        .single();
+      if (error || !data) return { error: error?.message ?? "Couldn't create household" };
+      window.localStorage.setItem(STORAGE_KEY, data.id);
+      setHousehold(data);
       return { error: null };
     },
-    [user, refresh]
+    [identityName]
   );
 
   const joinHousehold = useCallback(
     async (householdId: string) => {
-      if (!user) return { error: "Not signed in" };
       const trimmed = householdId.trim();
       if (!trimmed) return { error: "Household ID is required" };
-      const { error } = await getSupabaseClient()
-        .from("household_members")
-        .insert({ household_id: trimmed, user_id: user.id, role: "member" });
-      if (error) return { error: error.message };
-      await refresh();
+      const found = await loadById(trimmed);
+      if (!found) return { error: "No household found with that ID" };
+      window.localStorage.setItem(STORAGE_KEY, trimmed);
       return { error: null };
     },
-    [user, refresh]
+    [loadById]
   );
 
-  return { household, loaded, createHousehold, joinHousehold };
+  const leaveHousehold = useCallback(() => {
+    window.localStorage.removeItem(STORAGE_KEY);
+    setHousehold(null);
+  }, []);
+
+  return { household, loaded, createHousehold, joinHousehold, leaveHousehold };
 }

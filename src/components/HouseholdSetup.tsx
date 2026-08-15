@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { useHousehold } from "@/hooks/useHousehold";
 
-export function HouseholdSetup() {
-  const { createHousehold, joinHousehold } = useHousehold();
+type Props = {
+  createHousehold: (name: string) => Promise<{ error: string | null }>;
+  joinHousehold: (householdId: string) => Promise<{ error: string | null }>;
+};
+
+export function HouseholdSetup({ createHousehold, joinHousehold }: Props) {
   const [mode, setMode] = useState<"create" | "join">("create");
   const [name, setName] = useState("");
   const [householdId, setHouseholdId] = useState("");
