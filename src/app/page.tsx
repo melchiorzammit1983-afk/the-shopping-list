@@ -1,23 +1,34 @@
 "use client";
 
-import { useIdentity } from "@/hooks/useIdentity";
+import { useAppUser } from "@/hooks/useAppUser";
 import { useHousehold } from "@/hooks/useHousehold";
-import { WhoAreYou } from "@/components/WhoAreYou";
+import { LoginOrSignUp } from "@/components/LoginOrSignUp";
 import { HouseholdSetup } from "@/components/HouseholdSetup";
 import { InventoryApp } from "@/components/InventoryApp";
 
 export default function Home() {
-  const { name, loaded: identityLoaded, setIdentity } = useIdentity();
+  const {
+    user,
+    loaded: userLoaded,
+    loginWithMobile,
+    signUp,
+    logOut,
+  } = useAppUser();
+  const displayName = user ? `${user.name} ${user.surname}`.trim() : null;
   const {
     household,
     loaded: householdLoaded,
     createHousehold,
     joinHousehold,
     leaveHousehold,
-  } = useHousehold(name);
+  } = useHousehold(displayName);
 
-  if (!identityLoaded) return null;
-  if (!name) return <WhoAreYou setIdentity={setIdentity} />;
+  if (!userLoaded) return null;
+  if (!user) {
+    return (
+      <LoginOrSignUp loginWithMobile={loginWithMobile} signUp={signUp} />
+    );
+  }
   if (!householdLoaded) return null;
   if (!household) {
     return (
@@ -31,8 +42,9 @@ export default function Home() {
   return (
     <InventoryApp
       household={household}
-      identityName={name}
+      identityName={displayName ?? user.name}
       onLeaveHousehold={leaveHousehold}
+      onLogOut={logOut}
     />
   );
 }
