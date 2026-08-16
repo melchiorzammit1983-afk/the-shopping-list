@@ -11,12 +11,14 @@ type Props = {
   household: Household;
   identityName: string;
   onLeaveHousehold: () => void;
+  onLogOut: () => void;
 };
 
 export function InventoryApp({
   household,
   identityName,
   onLeaveHousehold,
+  onLogOut,
 }: Props) {
   const { items, loaded, addItem, toggleItem, removeItem, clearDone } =
     useInventory(household.id, identityName);
@@ -41,12 +43,20 @@ export function InventoryApp({
             Household ID (share to invite): {household.id}
           </p>
         </div>
-        <button
-          onClick={onLeaveHousehold}
-          className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
-        >
-          Switch household
-        </button>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            onClick={onLeaveHousehold}
+            className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+          >
+            Switch household
+          </button>
+          <button
+            onClick={onLogOut}
+            className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+          >
+            Log out
+          </button>
+        </div>
       </header>
 
       {loaded && items.length === 0 && (
