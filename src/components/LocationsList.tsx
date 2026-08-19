@@ -4,13 +4,21 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { useLocations } from "@/hooks/useLocations";
 
+import type { Location } from "@/types/location";
+
 type Props = {
   userId: string;
   userEmail: string | undefined;
   onLogOut: () => void;
+  onSelectLocation: (location: Location) => void;
 };
 
-export function LocationsList({ userId, userEmail, onLogOut }: Props) {
+export function LocationsList({
+  userId,
+  userEmail,
+  onLogOut,
+  onSelectLocation,
+}: Props) {
   const { locations, loaded, createLocation } = useLocations(userId);
   const [name, setName] = useState("");
   const [type, setType] = useState("");
@@ -58,16 +66,19 @@ export function LocationsList({ userId, userEmail, onLogOut }: Props) {
 
       <ul className="flex flex-col gap-1">
         {locations.map((location) => (
-          <li
-            key={location.id}
-            className="flex items-center justify-between rounded-lg px-2 py-2 hover:bg-black/[.03] dark:hover:bg-white/[.05]"
-          >
-            <span className="text-sm">{location.name}</span>
-            {location.type && (
-              <span className="text-xs text-black/40 dark:text-white/40">
-                {location.type}
-              </span>
-            )}
+          <li key={location.id}>
+            <button
+              type="button"
+              onClick={() => onSelectLocation(location)}
+              className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left hover:bg-black/[.03] dark:hover:bg-white/[.05]"
+            >
+              <span className="text-sm">{location.name}</span>
+              {location.type && (
+                <span className="text-xs text-black/40 dark:text-white/40">
+                  {location.type}
+                </span>
+              )}
+            </button>
           </li>
         ))}
       </ul>
