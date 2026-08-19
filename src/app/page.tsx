@@ -1,50 +1,28 @@
 "use client";
 
-import { useAppUser } from "@/hooks/useAppUser";
-import { useHousehold } from "@/hooks/useHousehold";
-import { LoginOrSignUp } from "@/components/LoginOrSignUp";
-import { HouseholdSetup } from "@/components/HouseholdSetup";
-import { InventoryApp } from "@/components/InventoryApp";
+import { useAuth } from "@/hooks/useAuth";
+import { AuthScreen } from "@/components/AuthScreen";
+import { LocationsList } from "@/components/LocationsList";
 
 export default function Home() {
-  const {
-    user,
-    loaded: userLoaded,
-    loginWithMobile,
-    signUp,
-    logOut,
-  } = useAppUser();
-  const displayName = user ? `${user.name} ${user.surname}`.trim() : null;
-  const {
-    household,
-    loaded: householdLoaded,
-    createHousehold,
-    joinHousehold,
-    leaveHousehold,
-  } = useHousehold(displayName);
+  const { user, loaded, signUpWithPassword, signInWithPassword, signOut } =
+    useAuth();
 
-  if (!userLoaded) return null;
+  if (!loaded) return null;
   if (!user) {
     return (
-      <LoginOrSignUp loginWithMobile={loginWithMobile} signUp={signUp} />
-    );
-  }
-  if (!householdLoaded) return null;
-  if (!household) {
-    return (
-      <HouseholdSetup
-        createHousehold={createHousehold}
-        joinHousehold={joinHousehold}
+      <AuthScreen
+        signUpWithPassword={signUpWithPassword}
+        signInWithPassword={signInWithPassword}
       />
     );
   }
 
   return (
-    <InventoryApp
-      household={household}
-      identityName={displayName ?? user.name}
-      onLeaveHousehold={leaveHousehold}
-      onLogOut={logOut}
+    <LocationsList
+      userId={user.id}
+      userEmail={user.email}
+      onLogOut={signOut}
     />
   );
 }
