@@ -55,5 +55,24 @@ export function useLocationStock(locationId: string | null) {
     [locationId, stock, refresh]
   );
 
-  return { stock, loaded, addStock };
+  const adjustQuantity = useCallback(
+    async (stockId: string, delta: number) => {
+      const existing = stock.find((row) => row.id === stockId);
+      if (!existing) return { error: "Item not found" };
+      const nextQuantity = Math.max(0, existing.quantity + delta);
+      const { error } = await getSupabaseClient()
+        .from("location_items")
+        .update({
+          quantity: nextQuantity,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", stockId);
+      if (error) return { error: error.message };
+      await refresh();
+      return { error: null };
+    },
+    [stock, refresh]
+  );
+
+  return { stock, loaded, addStock, adjustQuantity };
 }
