@@ -27,11 +27,20 @@ export function useAuth() {
 
   const signUpWithPassword = useCallback(
     async (email: string, password: string) => {
-      const { error } = await getSupabaseClient().auth.signUp({
+      const { data, error } = await getSupabaseClient().auth.signUp({
         email,
         password,
       });
-      return { error: error?.message ?? null };
+      if (error) return { error: error.message };
+      // Supabase returns a success response with no session and an empty
+      // identities array (instead of an error) when the email is already
+      // registered, so the account's real password is left unchanged.
+      if (!data.session && data.user?.identities?.length === 0) {
+        return {
+          error: "An account with this email already exists. Log in instead.",
+        };
+      }
+      return { error: null };
     },
     []
   );
