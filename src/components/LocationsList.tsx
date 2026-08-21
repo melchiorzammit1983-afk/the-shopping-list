@@ -11,6 +11,7 @@ type Props = {
   userEmail: string | undefined;
   onLogOut: () => void;
   onSelectLocation: (location: Location) => void;
+  onGoToRecipes: () => void;
 };
 
 export function LocationsList({
@@ -18,6 +19,7 @@ export function LocationsList({
   userEmail,
   onLogOut,
   onSelectLocation,
+  onGoToRecipes,
 }: Props) {
   const { locations, loaded, createLocation } = useLocations(userId);
   const [name, setName] = useState("");
@@ -50,12 +52,20 @@ export function LocationsList({
             </p>
           )}
         </div>
-        <button
-          onClick={onLogOut}
-          className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
-        >
-          Log out
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onGoToRecipes}
+            className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+          >
+            Recipes
+          </button>
+          <button
+            onClick={onLogOut}
+            className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+          >
+            Log out
+          </button>
+        </div>
       </header>
 
       {loaded && locations.length === 0 && (
