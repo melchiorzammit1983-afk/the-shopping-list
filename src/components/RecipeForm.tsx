@@ -40,6 +40,7 @@ export function RecipeForm({
     setPending(true);
     setError("");
 
+    const wasNew = !recipe;
     const result = recipe
       ? await updateRecipe(recipe.id, name, method, servings, isPublic)
       : await createRecipe(name, method, servings, isPublic);
@@ -50,7 +51,10 @@ export function RecipeForm({
       return;
     }
     setRecipe(result.recipe);
-    onDone(result.recipe);
+    // Stay on this screen after creating so the ingredients section (which
+    // only appears once the recipe exists) is immediately visible, instead
+    // of dropping the user onto the view-only detail page.
+    if (!wasNew) onDone(result.recipe);
   }
 
   return (
