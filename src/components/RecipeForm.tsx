@@ -74,14 +74,12 @@ export function RecipeForm({
       <form onSubmit={handleSave} className="flex flex-col gap-2">
         <input
           type="text"
-          required
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Recipe name"
           className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
         />
         <textarea
-          required
           rows={6}
           value={method}
           onChange={(e) => setMethod(e.target.value)}
