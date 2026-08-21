@@ -40,24 +40,29 @@ export function useRecipes(userId: string | null) {
     ) => {
       if (!userId) return { recipe: null, error: "Not signed in" };
       const trimmedName = name.trim();
-      const trimmedMethod = method.trim();
       if (!trimmedName) return { recipe: null, error: "Name is required" };
-      if (!trimmedMethod) return { recipe: null, error: "Method is required" };
       const parsedServings = servings.trim() ? parseFloat(servings) : null;
-      const { data, error } = await getSupabaseClient()
-        .from("recipes")
-        .insert({
-          name: trimmedName,
-          method: trimmedMethod,
-          servings: parsedServings,
-          is_public: isPublic,
-          created_by: userId,
-        })
-        .select("*")
-        .single();
-      if (error) return { recipe: null, error: error.message };
-      await refresh();
-      return { recipe: data as Recipe, error: null };
+      try {
+        const { data, error } = await getSupabaseClient()
+          .from("recipes")
+          .insert({
+            name: trimmedName,
+            method: method.trim(),
+            servings: parsedServings,
+            is_public: isPublic,
+            created_by: userId,
+          })
+          .select("*")
+          .single();
+        if (error) return { recipe: null, error: error.message };
+        await refresh();
+        return { recipe: data as Recipe, error: null };
+      } catch (err) {
+        return {
+          recipe: null,
+          error: err instanceof Error ? err.message : "Could not save recipe",
+        };
+      }
     },
     [userId, refresh]
   );
@@ -71,24 +76,29 @@ export function useRecipes(userId: string | null) {
       isPublic: boolean
     ) => {
       const trimmedName = name.trim();
-      const trimmedMethod = method.trim();
       if (!trimmedName) return { recipe: null, error: "Name is required" };
-      if (!trimmedMethod) return { recipe: null, error: "Method is required" };
       const parsedServings = servings.trim() ? parseFloat(servings) : null;
-      const { data, error } = await getSupabaseClient()
-        .from("recipes")
-        .update({
-          name: trimmedName,
-          method: trimmedMethod,
-          servings: parsedServings,
-          is_public: isPublic,
-        })
-        .eq("id", recipeId)
-        .select("*")
-        .single();
-      if (error) return { recipe: null, error: error.message };
-      await refresh();
-      return { recipe: data as Recipe, error: null };
+      try {
+        const { data, error } = await getSupabaseClient()
+          .from("recipes")
+          .update({
+            name: trimmedName,
+            method: method.trim(),
+            servings: parsedServings,
+            is_public: isPublic,
+          })
+          .eq("id", recipeId)
+          .select("*")
+          .single();
+        if (error) return { recipe: null, error: error.message };
+        await refresh();
+        return { recipe: data as Recipe, error: null };
+      } catch (err) {
+        return {
+          recipe: null,
+          error: err instanceof Error ? err.message : "Could not save recipe",
+        };
+      }
     },
     [refresh]
   );
