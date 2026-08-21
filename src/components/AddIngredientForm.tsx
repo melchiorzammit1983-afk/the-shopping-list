@@ -48,16 +48,25 @@ export function AddIngredientForm({ onAddIngredient }: Props) {
     setPending(true);
     setError("");
 
-    const qty = parseFloat(quantity);
+    // Accept either "500" typed with a separate unit, or "500g" typed
+    // together in this one field.
+    const match = quantity.trim().match(/^(\d*\.?\d+)\s*([a-zA-Z]*)$/);
+    if (!match) {
+      setError("Quantity must be a number, e.g. 500 or 500g");
+      setPending(false);
+      return;
+    }
+    const qty = parseFloat(match[1]);
     if (Number.isNaN(qty) || qty <= 0) {
       setError("Quantity must be a positive number");
       setPending(false);
       return;
     }
+    const finalUnit = unit.trim() || match[2];
 
     let item = selected;
     if (!item) {
-      const created = await createItem(query, category, unit);
+      const created = await createItem(query, category, finalUnit);
       if (created.error || !created.item) {
         setError(created.error ?? "Could not create item");
         setPending(false);
@@ -66,7 +75,7 @@ export function AddIngredientForm({ onAddIngredient }: Props) {
       item = created.item;
     }
 
-    const result = await onAddIngredient(item.id, qty, unit);
+    const result = await onAddIngredient(item.id, qty, finalUnit);
     setPending(false);
     if (result.error) {
       setError(result.error);
@@ -157,14 +166,13 @@ export function AddIngredientForm({ onAddIngredient }: Props) {
 
           <form onSubmit={handleAdd} className="flex gap-2">
             <input
-              type="number"
-              step="any"
-              min="0"
+              type="text"
+              inputMode="decimal"
               required
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              placeholder="Quantity"
-              className="w-24 rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
+              placeholder="Quantity, e.g. 500 or 500g"
+              className="w-36 rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
             />
             <input
               type="text"
