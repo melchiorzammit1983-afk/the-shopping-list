@@ -1,16 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { useItemCatalog } from "@/hooks/useItemCatalog";
+import { usePhotoUpload } from "@/hooks/usePhotoUpload";
 import type { Item } from "@/types/item";
 
 type Props = {
-  onAddStock: (itemId: string, quantity: number) => Promise<{ error: string | null }>;
+  userId: string;
+  onAddStock: (
+    itemId: string,
+    quantity: number,
+    unit: string
+  ) => Promise<{ error: string | null }>;
 };
 
-export function AddItemForm({ onAddStock }: Props) {
+export function AddStockItemForm({ userId, onAddStock }: Props) {
   const { searchItems, createItem } = useItemCatalog();
+  const { uploadPhoto } = usePhotoUpload(userId, "item-photos");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Item[]>([]);
   const [searched, setSearched] = useState(false);
@@ -18,6 +25,8 @@ export function AddItemForm({ onAddStock }: Props) {
   const [category, setCategory] = useState("");
   const [unit, setUnit] = useState("");
   const [quantity, setQuantity] = useState("1");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
@@ -36,6 +45,20 @@ export function AddItemForm({ onAddStock }: Props) {
 
   function selectExisting(item: Item) {
     setSelected(item);
+  }
+
+  async function handlePhotoChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    setError("");
+    const result = await uploadPhoto(file);
+    setUploadingPhoto(false);
+    if (result.error || !result.url) {
+      setError(result.error ?? "Could not upload photo");
+      return;
+    }
+    setPhotoUrl(result.url);
   }
 
   async function handleAdd(e: FormEvent) {
@@ -61,7 +84,7 @@ export function AddItemForm({ onAddStock }: Props) {
 
     let item = selected;
     if (!item) {
-      const created = await createItem(query, category, finalUnit);
+      const created = await createItem(query, category, finalUnit, photoUrl);
       if (created.error || !created.item) {
         setError(created.error ?? "Could not create item");
         setPending(false);
@@ -70,7 +93,7 @@ export function AddItemForm({ onAddStock }: Props) {
       item = created.item;
     }
 
-    const result = await onAddStock(item.id, qty);
+    const result = await onAddStock(item.id, qty, finalUnit);
     setPending(false);
     if (result.error) {
       setError(result.error);
@@ -84,6 +107,7 @@ export function AddItemForm({ onAddStock }: Props) {
     setCategory("");
     setUnit("");
     setQuantity("1");
+    setPhotoUrl(null);
   }
 
   return (
@@ -165,6 +189,28 @@ export function AddItemForm({ onAddStock }: Props) {
                 placeholder="Unit, e.g. each / kg / l (optional)"
                 className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
               />
+              <div className="flex flex-col gap-2">
+                {photoUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={photoUrl}
+                    alt=""
+                    className="h-32 w-full rounded-lg object-cover"
+                  />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  disabled={uploadingPhoto}
+                  className="text-sm"
+                />
+                {uploadingPhoto && (
+                  <p className="text-xs text-black/40 dark:text-white/40">
+                    Uploading…
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -180,14 +226,14 @@ export function AddItemForm({ onAddStock }: Props) {
             />
             <button
               type="submit"
-              disabled={pending}
+              disabled={pending || uploadingPhoto}
               className="flex-1 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {pending
                 ? "Adding…"
                 : selected
-                  ? `Add ${selected.name} to this location`
-                  : "Create item and add to this location"}
+                  ? `Add ${selected.name} to this shelf`
+                  : "Create item and add to this shelf"}
             </button>
           </form>
         </div>

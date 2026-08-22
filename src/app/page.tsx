@@ -4,16 +4,31 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthScreen } from "@/components/AuthScreen";
 import { LocationsList } from "@/components/LocationsList";
-import { LocationDetail } from "@/components/LocationDetail";
+import { RoomsList } from "@/components/RoomsList";
+import { RoomDetail } from "@/components/RoomDetail";
+import { ShelfDetail } from "@/components/ShelfDetail";
+import { ItemTotalView } from "@/components/ItemTotalView";
 import { RecipesList } from "@/components/RecipesList";
 import { RecipeDetail } from "@/components/RecipeDetail";
 import { RecipeForm } from "@/components/RecipeForm";
 import type { Location } from "@/types/location";
+import type { Room } from "@/types/room";
+import type { Shelf } from "@/types/shelf";
+import type { Item } from "@/types/item";
 import type { Recipe } from "@/types/recipe";
 
 type View =
   | { kind: "locations" }
   | { kind: "location-detail"; location: Location }
+  | { kind: "room-detail"; location: Location; room: Room }
+  | { kind: "shelf-detail"; location: Location; room: Room; shelf: Shelf }
+  | {
+      kind: "item-total";
+      location: Location;
+      room: Room;
+      shelf: Shelf;
+      item: Item;
+    }
   | { kind: "recipes" }
   | { kind: "recipe-detail"; recipe: Recipe }
   | { kind: "recipe-form"; recipe: Recipe | null };
@@ -36,9 +51,66 @@ export default function Home() {
   switch (view.kind) {
     case "location-detail":
       return (
-        <LocationDetail
+        <RoomsList
           location={view.location}
           onBack={() => setView({ kind: "locations" })}
+          onSelectRoom={(room) =>
+            setView({ kind: "room-detail", location: view.location, room })
+          }
+        />
+      );
+    case "room-detail":
+      return (
+        <RoomDetail
+          room={view.room}
+          onBack={() =>
+            setView({ kind: "location-detail", location: view.location })
+          }
+          onSelectShelf={(shelf) =>
+            setView({
+              kind: "shelf-detail",
+              location: view.location,
+              room: view.room,
+              shelf,
+            })
+          }
+        />
+      );
+    case "shelf-detail":
+      return (
+        <ShelfDetail
+          shelf={view.shelf}
+          userId={user.id}
+          onBack={() =>
+            setView({
+              kind: "room-detail",
+              location: view.location,
+              room: view.room,
+            })
+          }
+          onSelectItem={(item) =>
+            setView({
+              kind: "item-total",
+              location: view.location,
+              room: view.room,
+              shelf: view.shelf,
+              item,
+            })
+          }
+        />
+      );
+    case "item-total":
+      return (
+        <ItemTotalView
+          item={view.item}
+          onBack={() =>
+            setView({
+              kind: "shelf-detail",
+              location: view.location,
+              room: view.room,
+              shelf: view.shelf,
+            })
+          }
         />
       );
     case "recipes":

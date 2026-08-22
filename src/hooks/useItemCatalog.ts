@@ -19,7 +19,12 @@ export function useItemCatalog() {
   }, []);
 
   const createItem = useCallback(
-    async (name: string, category: string, unit: string) => {
+    async (
+      name: string,
+      category: string,
+      unit: string,
+      imageUrl: string | null = null
+    ) => {
       const trimmedName = name.trim();
       if (!trimmedName) return { item: null, error: "Name is required" };
       const { data, error } = await getSupabaseClient()
@@ -28,6 +33,7 @@ export function useItemCatalog() {
           name: trimmedName,
           category: category.trim() || null,
           unit: unit.trim() || null,
+          image_url: imageUrl,
         })
         .select("*")
         .single();

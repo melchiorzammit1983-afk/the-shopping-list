@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useRecipes } from "@/hooks/useRecipes";
 import { useRecipeIngredients } from "@/hooks/useRecipeIngredients";
-import { useRecipePhotoUpload } from "@/hooks/useRecipePhotoUpload";
+import { usePhotoUpload } from "@/hooks/usePhotoUpload";
 import { AddIngredientForm } from "@/components/AddIngredientForm";
 import type { Recipe } from "@/types/recipe";
 
@@ -22,7 +22,7 @@ export function RecipeForm({
   onDone,
 }: Props) {
   const { createRecipe, updateRecipe } = useRecipes(userId);
-  const { uploadPhoto } = useRecipePhotoUpload(userId);
+  const { uploadPhoto } = usePhotoUpload(userId, "recipe-photos");
   const [recipe, setRecipe] = useState<Recipe | null>(existingRecipe);
   const [name, setName] = useState(existingRecipe?.name ?? "");
   const [method, setMethod] = useState(existingRecipe?.method ?? "");
