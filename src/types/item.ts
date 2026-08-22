@@ -3,5 +3,6 @@ export type Item = {
   name: string;
   category: string | null;
   unit: string | null;
+  image_url: string | null;
   created_at: string;
 };
