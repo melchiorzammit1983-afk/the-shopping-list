@@ -41,5 +41,43 @@ export function useRooms(locationId: string | null) {
     [locationId, refresh]
   );
 
-  return { rooms, loaded, createRoom };
+  const renameRoom = useCallback(
+    async (roomId: string, name: string) => {
+      const trimmedName = name.trim();
+      if (!trimmedName) return { error: "Name is required" };
+      const { error } = await getSupabaseClient()
+        .from("rooms")
+        .update({ name: trimmedName })
+        .eq("id", roomId);
+      if (error) return { error: error.message };
+      await refresh();
+      return { error: null };
+    },
+    [refresh]
+  );
+
+  const deleteRoom = useCallback(
+    async (roomId: string) => {
+      const { data: childShelves, error: countError } = await getSupabaseClient()
+        .from("shelves")
+        .select("id")
+        .eq("room_id", roomId);
+      if (countError) return { error: countError.message };
+      if ((childShelves?.length ?? 0) > 0) {
+        return {
+          error: "This room has shelves in it — remove those first.",
+        };
+      }
+      const { error } = await getSupabaseClient()
+        .from("rooms")
+        .delete()
+        .eq("id", roomId);
+      if (error) return { error: error.message };
+      await refresh();
+      return { error: null };
+    },
+    [refresh]
+  );
+
+  return { rooms, loaded, createRoom, renameRoom, deleteRoom };
 }

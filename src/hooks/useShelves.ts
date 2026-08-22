@@ -41,5 +41,43 @@ export function useShelves(roomId: string | null) {
     [roomId, refresh]
   );
 
-  return { shelves, loaded, createShelf };
+  const renameShelf = useCallback(
+    async (shelfId: string, name: string) => {
+      const trimmedName = name.trim();
+      if (!trimmedName) return { error: "Name is required" };
+      const { error } = await getSupabaseClient()
+        .from("shelves")
+        .update({ name: trimmedName })
+        .eq("id", shelfId);
+      if (error) return { error: error.message };
+      await refresh();
+      return { error: null };
+    },
+    [refresh]
+  );
+
+  const deleteShelf = useCallback(
+    async (shelfId: string) => {
+      const { data: childEntries, error: countError } = await getSupabaseClient()
+        .from("stock_entries")
+        .select("id")
+        .eq("shelf_id", shelfId);
+      if (countError) return { error: countError.message };
+      if ((childEntries?.length ?? 0) > 0) {
+        return {
+          error: "This shelf has items on it — remove those first.",
+        };
+      }
+      const { error } = await getSupabaseClient()
+        .from("shelves")
+        .delete()
+        .eq("id", shelfId);
+      if (error) return { error: error.message };
+      await refresh();
+      return { error: null };
+    },
+    [refresh]
+  );
+
+  return { shelves, loaded, createShelf, renameShelf, deleteShelf };
 }
