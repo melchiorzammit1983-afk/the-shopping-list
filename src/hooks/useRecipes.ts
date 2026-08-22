@@ -36,7 +36,8 @@ export function useRecipes(userId: string | null) {
       name: string,
       method: string,
       servings: string,
-      isPublic: boolean
+      isPublic: boolean,
+      imageUrl: string | null
     ) => {
       if (!userId) return { recipe: null, error: "Not signed in" };
       const trimmedName = name.trim();
@@ -50,6 +51,7 @@ export function useRecipes(userId: string | null) {
             method: method.trim(),
             servings: parsedServings,
             is_public: isPublic,
+            image_url: imageUrl,
             created_by: userId,
           })
           .select("*")
@@ -73,7 +75,8 @@ export function useRecipes(userId: string | null) {
       name: string,
       method: string,
       servings: string,
-      isPublic: boolean
+      isPublic: boolean,
+      imageUrl: string | null
     ) => {
       const trimmedName = name.trim();
       if (!trimmedName) return { recipe: null, error: "Name is required" };
@@ -86,6 +89,7 @@ export function useRecipes(userId: string | null) {
             method: method.trim(),
             servings: parsedServings,
             is_public: isPublic,
+            image_url: imageUrl,
           })
           .eq("id", recipeId)
           .select("*")

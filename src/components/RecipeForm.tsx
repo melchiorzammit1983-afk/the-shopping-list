@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { useRecipes } from "@/hooks/useRecipes";
 import { useRecipeIngredients } from "@/hooks/useRecipeIngredients";
+import { useRecipePhotoUpload } from "@/hooks/useRecipePhotoUpload";
 import { AddIngredientForm } from "@/components/AddIngredientForm";
 import type { Recipe } from "@/types/recipe";
 
@@ -21,6 +22,7 @@ export function RecipeForm({
   onDone,
 }: Props) {
   const { createRecipe, updateRecipe } = useRecipes(userId);
+  const { uploadPhoto } = useRecipePhotoUpload(userId);
   const [recipe, setRecipe] = useState<Recipe | null>(existingRecipe);
   const [name, setName] = useState(existingRecipe?.name ?? "");
   const [method, setMethod] = useState(existingRecipe?.method ?? "");
@@ -28,6 +30,11 @@ export function RecipeForm({
     existingRecipe?.servings != null ? String(existingRecipe.servings) : ""
   );
   const [isPublic, setIsPublic] = useState(existingRecipe?.is_public ?? false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(
+    existingRecipe?.image_url ?? null
+  );
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -37,11 +44,25 @@ export function RecipeForm({
     recipe?.id ?? null
   );
 
+  async function handlePhotoChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    setPhotoError("");
+    const result = await uploadPhoto(file);
+    setUploadingPhoto(false);
+    if (result.error || !result.url) {
+      setPhotoError(result.error ?? "Could not upload photo");
+      return;
+    }
+    setPhotoUrl(result.url);
+  }
+
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
     setCreating(true);
     setCreateError("");
-    const result = await createRecipe(name, "", "", false);
+    const result = await createRecipe(name, "", "", false, photoUrl);
     setCreating(false);
     if (result.error || !result.recipe) {
       setCreateError(result.error ?? "Could not create recipe");
@@ -55,7 +76,14 @@ export function RecipeForm({
     if (!recipe) return;
     setSaving(true);
     setSaveError("");
-    const result = await updateRecipe(recipe.id, name, method, servings, isPublic);
+    const result = await updateRecipe(
+      recipe.id,
+      name,
+      method,
+      servings,
+      isPublic,
+      photoUrl
+    );
     setSaving(false);
     if (result.error || !result.recipe) {
       setSaveError(result.error ?? "Could not save recipe");
@@ -64,6 +92,36 @@ export function RecipeForm({
     setRecipe(result.recipe);
     onDone(result.recipe);
   }
+
+  const photoField = (
+    <div className="flex flex-col gap-2">
+      {photoUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={photoUrl}
+          alt=""
+          className="h-40 w-full rounded-lg object-cover"
+        />
+      )}
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handlePhotoChange}
+        disabled={uploadingPhoto}
+        className="text-sm"
+      />
+      {uploadingPhoto && (
+        <p className="text-xs text-black/40 dark:text-white/40">
+          Uploading…
+        </p>
+      )}
+      {photoError && (
+        <p className="text-sm text-red-600 dark:text-red-400">
+          {photoError}
+        </p>
+      )}
+    </div>
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-10">
@@ -88,9 +146,10 @@ export function RecipeForm({
             placeholder="Recipe name"
             className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
           />
+          {photoField}
           <button
             type="submit"
-            disabled={creating}
+            disabled={creating || uploadingPhoto}
             className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {creating ? "Creating…" : "Create recipe"}
@@ -110,6 +169,7 @@ export function RecipeForm({
             placeholder="Recipe name"
             className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
           />
+          {photoField}
 
           <div className="flex flex-col gap-2 border-y border-black/10 py-6 dark:border-white/15">
             <h2 className="text-xs font-medium uppercase tracking-wide text-black/40 dark:text-white/40">
@@ -165,7 +225,7 @@ export function RecipeForm({
             </label>
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || uploadingPhoto}
               className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save changes"}
