@@ -76,5 +76,42 @@ export function useStockEntries(shelfId: string | null) {
     [entries, refresh]
   );
 
-  return { entries, loaded, addStock, adjustQuantity };
+  const setQuantity = useCallback(
+    async (entryId: string, quantity: number, unit: string) => {
+      const { error } = await getSupabaseClient()
+        .from("stock_entries")
+        .update({
+          quantity,
+          unit: unit.trim() || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", entryId);
+      if (error) return { error: error.message };
+      await refresh();
+      return { error: null };
+    },
+    [refresh]
+  );
+
+  const removeEntry = useCallback(
+    async (entryId: string) => {
+      const { error } = await getSupabaseClient()
+        .from("stock_entries")
+        .delete()
+        .eq("id", entryId);
+      if (error) return { error: error.message };
+      await refresh();
+      return { error: null };
+    },
+    [refresh]
+  );
+
+  return {
+    entries,
+    loaded,
+    addStock,
+    adjustQuantity,
+    setQuantity,
+    removeEntry,
+  };
 }

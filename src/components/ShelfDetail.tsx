@@ -5,6 +5,7 @@ import { useStockEntries } from "@/hooks/useStockEntries";
 import { AddStockItemForm } from "@/components/AddStockItemForm";
 import type { Shelf } from "@/types/shelf";
 import type { Item } from "@/types/item";
+import type { StockEntryWithItem } from "@/types/stockEntry";
 
 type Props = {
   shelf: Shelf;
@@ -14,9 +15,8 @@ type Props = {
 };
 
 export function ShelfDetail({ shelf, userId, onBack, onSelectItem }: Props) {
-  const { entries, loaded, addStock, adjustQuantity } = useStockEntries(
-    shelf.id
-  );
+  const { entries, loaded, addStock, adjustQuantity, setQuantity, removeEntry } =
+    useStockEntries(shelf.id);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
@@ -24,6 +24,39 @@ export function ShelfDetail({ shelf, userId, onBack, onSelectItem }: Props) {
     setPendingId(entryId);
     setError("");
     const result = await adjustQuantity(entryId, delta);
+    setPendingId(null);
+    if (result.error) setError(result.error);
+  }
+
+  async function handleSetQuantity(entry: StockEntryWithItem) {
+    const input = window.prompt(
+      `Set quantity for ${entry.item.name}`,
+      `${entry.quantity}${entry.unit ?? ""}`
+    );
+    if (input === null) return;
+    const match = input.trim().match(/^(\d*\.?\d+)\s*([a-zA-Z]*)$/);
+    if (!match) {
+      setError("Quantity must be a number, e.g. 500 or 500g");
+      return;
+    }
+    const qty = parseFloat(match[1]);
+    if (Number.isNaN(qty) || qty < 0) {
+      setError("Quantity must be zero or a positive number");
+      return;
+    }
+    const unit = match[2] || entry.unit || "";
+    setPendingId(entry.id);
+    setError("");
+    const result = await setQuantity(entry.id, qty, unit);
+    setPendingId(null);
+    if (result.error) setError(result.error);
+  }
+
+  async function handleRemove(entry: StockEntryWithItem) {
+    if (!window.confirm(`Remove ${entry.item.name} from this shelf?`)) return;
+    setPendingId(entry.id);
+    setError("");
+    const result = await removeEntry(entry.id);
     setPendingId(null);
     if (result.error) setError(result.error);
   }
@@ -69,10 +102,15 @@ export function ShelfDetail({ shelf, userId, onBack, onSelectItem }: Props) {
               >
                 −
               </button>
-              <span className="w-16 text-center text-xs text-black/40 dark:text-white/40">
+              <button
+                type="button"
+                onClick={() => handleSetQuantity(entry)}
+                disabled={pendingId === entry.id}
+                className="w-16 text-center text-xs text-black/40 hover:text-black/70 disabled:opacity-30 dark:text-white/40 dark:hover:text-white/70"
+              >
                 {entry.quantity}
                 {entry.unit ? ` ${entry.unit}` : ""}
-              </span>
+              </button>
               <button
                 type="button"
                 onClick={() => handleAdjust(entry.id, 1)}
@@ -81,6 +119,14 @@ export function ShelfDetail({ shelf, userId, onBack, onSelectItem }: Props) {
                 className="flex h-7 w-7 items-center justify-center rounded-full border border-black/10 text-sm leading-none hover:bg-black/[.05] disabled:opacity-30 dark:border-white/15 dark:hover:bg-white/[.08]"
               >
                 +
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRemove(entry)}
+                disabled={pendingId === entry.id}
+                className="text-xs text-black/40 hover:text-red-600 disabled:opacity-30 dark:text-white/40 dark:hover:text-red-400"
+              >
+                Remove
               </button>
             </div>
           </li>

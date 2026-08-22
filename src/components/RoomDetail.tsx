@@ -13,7 +13,8 @@ type Props = {
 };
 
 export function RoomDetail({ room, onBack, onSelectShelf }: Props) {
-  const { shelves, loaded, createShelf } = useShelves(room.id);
+  const { shelves, loaded, createShelf, renameShelf, deleteShelf } =
+    useShelves(room.id);
   const [name, setName] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -29,6 +30,21 @@ export function RoomDetail({ room, onBack, onSelectShelf }: Props) {
       return;
     }
     setName("");
+  }
+
+  async function handleRename(shelf: Shelf) {
+    const next = window.prompt("Rename shelf", shelf.name);
+    if (next === null) return;
+    setError("");
+    const result = await renameShelf(shelf.id, next);
+    if (result.error) setError(result.error);
+  }
+
+  async function handleDelete(shelf: Shelf) {
+    if (!window.confirm(`Delete "${shelf.name}"?`)) return;
+    setError("");
+    const result = await deleteShelf(shelf.id);
+    if (result.error) setError(result.error);
   }
 
   return (
@@ -51,14 +67,33 @@ export function RoomDetail({ room, onBack, onSelectShelf }: Props) {
 
       <ul className="flex flex-col gap-1">
         {shelves.map((shelf) => (
-          <li key={shelf.id}>
+          <li
+            key={shelf.id}
+            className="flex items-center justify-between rounded-lg px-2 py-2 hover:bg-black/[.03] dark:hover:bg-white/[.05]"
+          >
             <button
               type="button"
               onClick={() => onSelectShelf(shelf)}
-              className="flex w-full items-center rounded-lg px-2 py-2 text-left text-sm hover:bg-black/[.03] dark:hover:bg-white/[.05]"
+              className="flex-1 text-left text-sm"
             >
               {shelf.name}
             </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => handleRename(shelf)}
+                className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+              >
+                Rename
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(shelf)}
+                className="text-xs text-black/40 hover:text-red-600 dark:text-white/40 dark:hover:text-red-400"
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>

@@ -13,7 +13,9 @@ type Props = {
 };
 
 export function RoomsList({ location, onBack, onSelectRoom }: Props) {
-  const { rooms, loaded, createRoom } = useRooms(location.id);
+  const { rooms, loaded, createRoom, renameRoom, deleteRoom } = useRooms(
+    location.id
+  );
   const [name, setName] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -29,6 +31,21 @@ export function RoomsList({ location, onBack, onSelectRoom }: Props) {
       return;
     }
     setName("");
+  }
+
+  async function handleRename(room: Room) {
+    const next = window.prompt("Rename room", room.name);
+    if (next === null) return;
+    setError("");
+    const result = await renameRoom(room.id, next);
+    if (result.error) setError(result.error);
+  }
+
+  async function handleDelete(room: Room) {
+    if (!window.confirm(`Delete "${room.name}"?`)) return;
+    setError("");
+    const result = await deleteRoom(room.id);
+    if (result.error) setError(result.error);
   }
 
   return (
@@ -51,14 +68,33 @@ export function RoomsList({ location, onBack, onSelectRoom }: Props) {
 
       <ul className="flex flex-col gap-1">
         {rooms.map((room) => (
-          <li key={room.id}>
+          <li
+            key={room.id}
+            className="flex items-center justify-between rounded-lg px-2 py-2 hover:bg-black/[.03] dark:hover:bg-white/[.05]"
+          >
             <button
               type="button"
               onClick={() => onSelectRoom(room)}
-              className="flex w-full items-center rounded-lg px-2 py-2 text-left text-sm hover:bg-black/[.03] dark:hover:bg-white/[.05]"
+              className="flex-1 text-left text-sm"
             >
               {room.name}
             </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => handleRename(room)}
+                className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+              >
+                Rename
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(room)}
+                className="text-xs text-black/40 hover:text-red-600 dark:text-white/40 dark:hover:text-red-400"
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
