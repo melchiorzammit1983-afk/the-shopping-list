@@ -41,6 +41,15 @@ export function RecipeDetail({ recipe, userId, onBack, onEdit }: Props) {
         )}
       </header>
 
+      {recipe.image_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={recipe.image_url}
+          alt=""
+          className="h-48 w-full rounded-lg object-cover"
+        />
+      )}
+
       <div className="flex flex-col gap-2">
         <h2 className="text-xs font-medium uppercase tracking-wide text-black/40 dark:text-white/40">
           Ingredients
