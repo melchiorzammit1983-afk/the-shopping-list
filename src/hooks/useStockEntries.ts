@@ -28,7 +28,13 @@ export function useStockEntries(shelfId: string | null) {
   }, [refresh]);
 
   const addStock = useCallback(
-    async (itemId: string, quantity: number, unit: string) => {
+    async (
+      itemId: string,
+      quantity: number,
+      unit: string,
+      expiryDate: string | null = null,
+      price: number | null = null
+    ) => {
       if (!shelfId) return { error: "No shelf selected" };
       const existing = entries.find((row) => row.item_id === itemId);
       if (existing) {
@@ -48,6 +54,8 @@ export function useStockEntries(shelfId: string | null) {
             item_id: itemId,
             quantity,
             unit: unit.trim() || null,
+            expiry_date: expiryDate,
+            price,
           });
         if (error) return { error: error.message };
       }

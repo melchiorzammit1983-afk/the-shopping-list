@@ -79,5 +79,46 @@ export function useShelves(roomId: string | null) {
     [refresh]
   );
 
-  return { shelves, loaded, createShelf, renameShelf, deleteShelf };
+  // Logs every stock entry on this shelf to the waste log under one reason,
+  // then clears them so the shelf can actually be deleted afterward.
+  const emptyShelf = useCallback(
+    async (shelfId: string, reason: string, removedBy: string) => {
+      const { data: shelfEntries, error: fetchError } =
+        await getSupabaseClient()
+          .from("stock_entries")
+          .select("item_id, quantity, unit")
+          .eq("shelf_id", shelfId);
+      if (fetchError) return { error: fetchError.message };
+      if (shelfEntries && shelfEntries.length > 0) {
+        const { error: logError } = await getSupabaseClient()
+          .from("waste_log")
+          .insert(
+            shelfEntries.map((entry) => ({
+              item_id: entry.item_id,
+              quantity: entry.quantity,
+              unit: entry.unit,
+              reason,
+              removed_by: removedBy,
+            }))
+          );
+        if (logError) return { error: logError.message };
+        const { error: deleteError } = await getSupabaseClient()
+          .from("stock_entries")
+          .delete()
+          .eq("shelf_id", shelfId);
+        if (deleteError) return { error: deleteError.message };
+      }
+      return { error: null };
+    },
+    []
+  );
+
+  return {
+    shelves,
+    loaded,
+    createShelf,
+    renameShelf,
+    deleteShelf,
+    emptyShelf,
+  };
 }

@@ -11,6 +11,7 @@ import { ItemTotalView } from "@/components/ItemTotalView";
 import { RecipesList } from "@/components/RecipesList";
 import { RecipeDetail } from "@/components/RecipeDetail";
 import { RecipeForm } from "@/components/RecipeForm";
+import { WasteLogView } from "@/components/WasteLogView";
 import type { Location } from "@/types/location";
 import type { Room } from "@/types/room";
 import type { Shelf } from "@/types/shelf";
@@ -31,7 +32,8 @@ type View =
     }
   | { kind: "recipes" }
   | { kind: "recipe-detail"; recipe: Recipe }
-  | { kind: "recipe-form"; recipe: Recipe | null };
+  | { kind: "recipe-form"; recipe: Recipe | null }
+  | { kind: "waste-log" };
 
 export default function Home() {
   const { user, loaded, signUpWithPassword, signInWithPassword, signOut } =
@@ -53,6 +55,7 @@ export default function Home() {
       return (
         <RoomsList
           location={view.location}
+          userId={user.id}
           onBack={() => setView({ kind: "locations" })}
           onSelectRoom={(room) =>
             setView({ kind: "room-detail", location: view.location, room })
@@ -63,6 +66,7 @@ export default function Home() {
       return (
         <RoomDetail
           room={view.room}
+          userId={user.id}
           onBack={() =>
             setView({ kind: "location-detail", location: view.location })
           }
@@ -140,6 +144,13 @@ export default function Home() {
           onDone={(recipe) => setView({ kind: "recipe-detail", recipe })}
         />
       );
+    case "waste-log":
+      return (
+        <WasteLogView
+          userId={user.id}
+          onBack={() => setView({ kind: "locations" })}
+        />
+      );
     default:
       return (
         <LocationsList
@@ -150,6 +161,7 @@ export default function Home() {
             setView({ kind: "location-detail", location })
           }
           onGoToRecipes={() => setView({ kind: "recipes" })}
+          onGoToWasteLog={() => setView({ kind: "waste-log" })}
         />
       );
   }

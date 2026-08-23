@@ -6,6 +6,8 @@ export type StockEntryWithItem = {
   item_id: string;
   quantity: number;
   unit: string | null;
+  expiry_date: string | null;
+  price: number | null;
   created_at: string;
   updated_at: string;
   item: Item;
