@@ -3,20 +3,23 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useShelves } from "@/hooks/useShelves";
+import { WASTE_REASONS } from "@/lib/wasteReasons";
 import type { Room } from "@/types/room";
 import type { Shelf } from "@/types/shelf";
 
 type Props = {
   room: Room;
+  userId: string;
   onBack: () => void;
   onSelectShelf: (shelf: Shelf) => void;
 };
 
-export function RoomDetail({ room, onBack, onSelectShelf }: Props) {
-  const { shelves, loaded, createShelf, renameShelf, deleteShelf } =
+export function RoomDetail({ room, userId, onBack, onSelectShelf }: Props) {
+  const { shelves, loaded, createShelf, renameShelf, deleteShelf, emptyShelf } =
     useShelves(room.id);
   const [name, setName] = useState("");
   const [pending, setPending] = useState(false);
+  const [blockedId, setBlockedId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   async function handleSubmit(e: FormEvent) {
@@ -44,7 +47,23 @@ export function RoomDetail({ room, onBack, onSelectShelf }: Props) {
     if (!window.confirm(`Delete "${shelf.name}"?`)) return;
     setError("");
     const result = await deleteShelf(shelf.id);
-    if (result.error) setError(result.error);
+    if (result.error) {
+      setBlockedId(shelf.id);
+      setError(result.error);
+      return;
+    }
+  }
+
+  async function handleEmptyAndDelete(shelf: Shelf, reason: string) {
+    setError("");
+    const emptyResult = await emptyShelf(shelf.id, reason, userId);
+    if (emptyResult.error) {
+      setError(emptyResult.error);
+      return;
+    }
+    const deleteResult = await deleteShelf(shelf.id);
+    setBlockedId(null);
+    if (deleteResult.error) setError(deleteResult.error);
   }
 
   return (
@@ -69,31 +88,64 @@ export function RoomDetail({ room, onBack, onSelectShelf }: Props) {
         {shelves.map((shelf) => (
           <li
             key={shelf.id}
-            className="flex items-center justify-between rounded-lg px-2 py-2 hover:bg-black/[.03] dark:hover:bg-white/[.05]"
+            className="flex flex-col gap-2 rounded-lg px-2 py-2 hover:bg-black/[.03] dark:hover:bg-white/[.05]"
           >
-            <button
-              type="button"
-              onClick={() => onSelectShelf(shelf)}
-              className="flex-1 text-left text-sm"
-            >
-              {shelf.name}
-            </button>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => handleRename(shelf)}
-                className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+                onClick={() => onSelectShelf(shelf)}
+                className="flex-1 text-left text-sm"
               >
-                Rename
+                {shelf.name}
               </button>
-              <button
-                type="button"
-                onClick={() => handleDelete(shelf)}
-                className="text-xs text-black/40 hover:text-red-600 dark:text-white/40 dark:hover:text-red-400"
-              >
-                Delete
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleRename(shelf)}
+                  className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+                >
+                  Rename
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(shelf)}
+                  className="text-xs text-black/40 hover:text-red-600 dark:text-white/40 dark:hover:text-red-400"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
+
+            {blockedId === shelf.id && (
+              <div className="flex flex-col gap-2 rounded-lg bg-black/[.03] p-2 dark:bg-white/[.05]">
+                <p className="text-xs text-black/50 dark:text-white/50">
+                  This shelf has items on it — remove those first, or empty
+                  it into the waste log and take the shelf with it.
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-black/40 dark:text-white/40">
+                    Empty and send to the trash bin:
+                  </span>
+                  {WASTE_REASONS.map((reason) => (
+                    <button
+                      key={reason.value}
+                      type="button"
+                      onClick={() => handleEmptyAndDelete(shelf, reason.value)}
+                      className="rounded-full border border-black/10 px-3 py-1 text-xs hover:bg-black/[.05] dark:border-white/15 dark:hover:bg-white/[.08]"
+                    >
+                      {reason.label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setBlockedId(null)}
+                    className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+                  >
+                    Never mind
+                  </button>
+                </div>
+              </div>
+            )}
           </li>
         ))}
       </ul>

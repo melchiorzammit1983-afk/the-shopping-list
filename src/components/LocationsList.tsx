@@ -12,6 +12,7 @@ type Props = {
   onLogOut: () => void;
   onSelectLocation: (location: Location) => void;
   onGoToRecipes: () => void;
+  onGoToWasteLog: () => void;
 };
 
 export function LocationsList({
@@ -20,6 +21,7 @@ export function LocationsList({
   onLogOut,
   onSelectLocation,
   onGoToRecipes,
+  onGoToWasteLog,
 }: Props) {
   const { locations, loaded, createLocation } = useLocations(userId);
   const [name, setName] = useState("");
@@ -58,6 +60,12 @@ export function LocationsList({
             className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
           >
             Recipes
+          </button>
+          <button
+            onClick={onGoToWasteLog}
+            className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+          >
+            Waste Log
           </button>
           <button
             onClick={onLogOut}

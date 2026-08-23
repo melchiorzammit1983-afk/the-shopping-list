@@ -11,7 +11,9 @@ type Props = {
   onAddStock: (
     itemId: string,
     quantity: number,
-    unit: string
+    unit: string,
+    expiryDate: string | null,
+    price: number | null
   ) => Promise<{ error: string | null }>;
 };
 
@@ -25,6 +27,8 @@ export function AddStockItemForm({ userId, onAddStock }: Props) {
   const [category, setCategory] = useState("");
   const [unit, setUnit] = useState("");
   const [quantity, setQuantity] = useState("1");
+  const [expiryDate, setExpiryDate] = useState("");
+  const [price, setPrice] = useState("");
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [pending, setPending] = useState(false);
@@ -93,7 +97,14 @@ export function AddStockItemForm({ userId, onAddStock }: Props) {
       item = created.item;
     }
 
-    const result = await onAddStock(item.id, qty, finalUnit);
+    const parsedPrice = price.trim() ? parseFloat(price) : null;
+    const result = await onAddStock(
+      item.id,
+      qty,
+      finalUnit,
+      expiryDate || null,
+      parsedPrice
+    );
     setPending(false);
     if (result.error) {
       setError(result.error);
@@ -107,6 +118,8 @@ export function AddStockItemForm({ userId, onAddStock }: Props) {
     setCategory("");
     setUnit("");
     setQuantity("1");
+    setExpiryDate("");
+    setPrice("");
     setPhotoUrl(null);
   }
 
@@ -214,7 +227,7 @@ export function AddStockItemForm({ userId, onAddStock }: Props) {
             </div>
           )}
 
-          <form onSubmit={handleAdd} className="flex gap-2">
+          <form onSubmit={handleAdd} className="flex flex-col gap-2">
             <input
               type="text"
               inputMode="decimal"
@@ -224,6 +237,23 @@ export function AddStockItemForm({ userId, onAddStock }: Props) {
               placeholder="Quantity, e.g. 500 or 500g"
               className="w-40 rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
             />
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+                aria-label="Expiry date (optional)"
+                className="flex-1 rounded-lg border border-black/10 bg-white px-4 py-2 text-sm text-black/70 outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:text-white/70 dark:focus:border-white/30"
+              />
+              <input
+                type="text"
+                inputMode="decimal"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="Price (optional)"
+                className="flex-1 rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
+              />
+            </div>
             <button
               type="submit"
               disabled={pending || uploadingPhoto}
