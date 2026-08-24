@@ -41,9 +41,11 @@ export function AuthScreen({ signUpWithPassword, signInWithPassword }: Props) {
   if (signedUp) {
     return (
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-3 px-4 py-10 text-center">
-        <h1 className="text-2xl font-semibold">Account created</h1>
-        <p className="text-sm text-black/60 dark:text-white/60">
-          You&apos;re signed in — continue below.
+        <h1 className="font-display text-3xl font-semibold tracking-tight">
+          You&apos;re in
+        </h1>
+        <p className="text-sm text-charcoal-soft">
+          Account created — continue below.
         </p>
       </div>
     );
@@ -52,17 +54,20 @@ export function AuthScreen({ signUpWithPassword, signInWithPassword }: Props) {
   return (
     <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-4 py-10">
       <header>
-        <h1 className="text-2xl font-semibold">
-          {mode === "sign-in" ? "Log in" : "Sign up"}
+        <h1 className="font-display text-3xl font-semibold tracking-tight">
+          {mode === "sign-in" ? "Welcome back" : "Let's get you set up"}
         </h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
+        <p className="mt-1 text-sm text-charcoal-soft">
           {mode === "sign-in"
             ? "Enter your email and password to continue."
-            : "Create an account to get started."}
+            : "Create an account to start stocking the shelves."}
         </p>
       </header>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-3 rounded-3xl border border-linen-border bg-linen-card p-5 shadow-sm"
+      >
         <input
           type="email"
           required
@@ -70,7 +75,7 @@ export function AuthScreen({ signUpWithPassword, signInWithPassword }: Props) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
+          className="rounded-2xl border border-linen-border bg-linen px-4 py-2.5 text-sm outline-none placeholder:text-charcoal-soft/60 focus:border-herb focus:ring-2 focus:ring-herb/20"
         />
         <input
           type="password"
@@ -79,12 +84,12 @@ export function AuthScreen({ signUpWithPassword, signInWithPassword }: Props) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
-          className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
+          className="rounded-2xl border border-linen-border bg-linen px-4 py-2.5 text-sm outline-none placeholder:text-charcoal-soft/60 focus:border-herb focus:ring-2 focus:ring-herb/20"
         />
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="rounded-full bg-herb px-4 py-2.5 text-sm font-semibold text-linen-card shadow-sm transition-colors hover:bg-herb-dark disabled:opacity-50"
         >
           {pending
             ? "Working…"
@@ -92,9 +97,7 @@ export function AuthScreen({ signUpWithPassword, signInWithPassword }: Props) {
               ? "Log in"
               : "Create account"}
         </button>
-        {error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        )}
+        {error && <p className="text-sm text-danger">{error}</p>}
       </form>
 
       <button
@@ -102,7 +105,7 @@ export function AuthScreen({ signUpWithPassword, signInWithPassword }: Props) {
           setMode(mode === "sign-in" ? "sign-up" : "sign-in");
           setError("");
         }}
-        className="text-sm text-black/50 hover:text-black/80 dark:text-white/50 dark:hover:text-white/80"
+        className="font-label text-xs uppercase tracking-wide text-charcoal-soft transition-colors hover:text-herb"
       >
         {mode === "sign-in"
           ? "Need an account? Sign up"

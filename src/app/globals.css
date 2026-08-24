@@ -1,26 +1,131 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Base surfaces */
+  --linen: #faf3e6;
+  --linen-card: #fffbf3;
+  --linen-border: #e6d9c2;
+
+  /* Text */
+  --charcoal: #2c241c;
+  --charcoal-soft: #6e6153;
+
+  /* Primary / secondary accents */
+  --herb: #4c7a4a;
+  --herb-dark: #3a5e39;
+  --herb-tint: #e2ead9;
+  --butter: #e7ae3b;
+  --butter-dark: #b9832a;
+  --butter-tint: #faecc9;
+
+  /* Room / storage type colors */
+  --fridge: #a9d3e0;
+  --fridge-on: #2f6577;
+  --freezer: #3f6f9e;
+  --freezer-on: #ffffff;
+  --pantry: #e7ae3b;
+  --pantry-on: #5a4213;
+  --laundry: #adc6a2;
+  --laundry-on: #3c5232;
+
+  /* Freshness color coding */
+  --fresh: #4f8f52;
+  --fresh-tint: #e2f0e0;
+  --expiring: #d9971f;
+  --expiring-tint: #faecc9;
+  --expired: #c1503f;
+  --expired-tint: #f6ddd8;
+  --no-expiry: #a79b8c;
+  --no-expiry-tint: #ece5da;
+
+  --danger: #b8483a;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-linen: var(--linen);
+  --color-linen-card: var(--linen-card);
+  --color-linen-border: var(--linen-border);
+
+  --color-charcoal: var(--charcoal);
+  --color-charcoal-soft: var(--charcoal-soft);
+
+  --color-herb: var(--herb);
+  --color-herb-dark: var(--herb-dark);
+  --color-herb-tint: var(--herb-tint);
+  --color-butter: var(--butter);
+  --color-butter-dark: var(--butter-dark);
+  --color-butter-tint: var(--butter-tint);
+
+  --color-fridge: var(--fridge);
+  --color-fridge-on: var(--fridge-on);
+  --color-freezer: var(--freezer);
+  --color-freezer-on: var(--freezer-on);
+  --color-pantry: var(--pantry);
+  --color-pantry-on: var(--pantry-on);
+  --color-laundry: var(--laundry);
+  --color-laundry-on: var(--laundry-on);
+
+  --color-fresh: var(--fresh);
+  --color-fresh-tint: var(--fresh-tint);
+  --color-expiring: var(--expiring);
+  --color-expiring-tint: var(--expiring-tint);
+  --color-expired: var(--expired);
+  --color-expired-tint: var(--expired-tint);
+  --color-no-expiry: var(--no-expiry);
+  --color-no-expiry-tint: var(--no-expiry-tint);
+
+  --color-danger: var(--danger);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-label: var(--font-label);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --linen: #221c15;
+    --linen-card: #2b241c;
+    --linen-border: #423728;
+
+    --charcoal: #f2e9d8;
+    --charcoal-soft: #b7a892;
+
+    --herb: #7bab6f;
+    --herb-dark: #5c8a54;
+    --herb-tint: #33402c;
+    --butter: #e9bd54;
+    --butter-dark: #cc9a3a;
+    --butter-tint: #453a20;
+
+    --fridge: #6fa6bb;
+    --fridge-on: #0f2933;
+    --freezer: #6f9bd1;
+    --freezer-on: #0e2440;
+    --pantry: #e9bd54;
+    --pantry-on: #3a2c0d;
+    --laundry: #8fac82;
+    --laundry-on: #1c2917;
+
+    --fresh: #75ab72;
+    --fresh-tint: #2a3a26;
+    --expiring: #dba53c;
+    --expiring-tint: #3d3018;
+    --expired: #d97161;
+    --expired-tint: #3d2420;
+    --no-expiry: #93877a;
+    --no-expiry-tint: #332c23;
+
+    --danger: #d97161;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-linen);
+  color: var(--color-charcoal);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display), serif;
 }

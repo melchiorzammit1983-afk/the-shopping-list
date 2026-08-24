@@ -4,7 +4,10 @@ import { useState } from "react";
 import { useStockEntries } from "@/hooks/useStockEntries";
 import { useWasteLog } from "@/hooks/useWasteLog";
 import { AddStockItemForm } from "@/components/AddStockItemForm";
+import { ItemThumbnail } from "@/components/ItemThumbnail";
 import { WASTE_REASONS } from "@/lib/wasteReasons";
+import { getFreshnessStatus } from "@/lib/freshness";
+import { shelfTypeInfo } from "@/lib/shelfTypes";
 import type { Shelf } from "@/types/shelf";
 import type { Item } from "@/types/item";
 import type { StockEntryWithItem } from "@/types/stockEntry";
@@ -23,6 +26,7 @@ export function ShelfDetail({ shelf, userId, onBack, onSelectItem }: Props) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const typeInfo = shelfTypeInfo(shelf.type);
 
   async function handleAdjust(entryId: string, delta: number) {
     setPendingId(entryId);
@@ -85,39 +89,57 @@ export function ShelfDetail({ shelf, userId, onBack, onSelectItem }: Props) {
       <header>
         <button
           onClick={onBack}
-          className="mb-1 text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+          className="font-label mb-1 text-xs uppercase tracking-wide text-charcoal-soft transition-colors hover:text-herb"
         >
           ← Shelves
         </button>
-        <h1 className="text-2xl font-semibold">{shelf.name}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="font-display text-3xl font-semibold tracking-tight">
+            {shelf.name}
+          </h1>
+          {typeInfo && (
+            <span
+              className={`font-label rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${typeInfo.bg} ${typeInfo.on}`}
+            >
+              {typeInfo.emoji} {typeInfo.label}
+            </span>
+          )}
+        </div>
       </header>
 
       {loaded && entries.length === 0 && (
-        <p className="text-sm text-black/40 dark:text-white/40">
+        <p className="text-sm text-charcoal-soft">
           Nothing here. Add something before it disappears on its own.
         </p>
       )}
 
-      <ul className="flex flex-col gap-1">
+      <ul className="flex flex-col gap-2">
         {entries.map((entry) => (
           <li
             key={entry.id}
-            className="flex flex-col gap-2 rounded-lg px-2 py-2 hover:bg-black/[.03] dark:hover:bg-white/[.05]"
+            className="flex flex-col gap-2 rounded-3xl border border-linen-border bg-linen-card p-3 shadow-sm"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={() => onSelectItem(entry.item)}
-                className="text-left text-sm"
+                className="flex flex-1 items-center gap-3 text-left"
               >
-                {entry.item.name}
-                {(entry.expiry_date || entry.price != null) && (
-                  <span className="ml-2 text-xs text-black/40 dark:text-white/40">
-                    {entry.expiry_date ? `exp. ${entry.expiry_date}` : ""}
-                    {entry.expiry_date && entry.price != null ? " · " : ""}
-                    {entry.price != null ? `€${entry.price}` : ""}
-                  </span>
-                )}
+                <ItemThumbnail
+                  imageUrl={entry.item.image_url}
+                  freshness={getFreshnessStatus(entry.expiry_date)}
+                  alt={entry.item.name}
+                />
+                <span className="text-sm">
+                  <span className="block font-medium">{entry.item.name}</span>
+                  {(entry.expiry_date || entry.price != null) && (
+                    <span className="font-label block text-xs text-charcoal-soft">
+                      {entry.expiry_date ? `exp. ${entry.expiry_date}` : ""}
+                      {entry.expiry_date && entry.price != null ? " · " : ""}
+                      {entry.price != null ? `€${entry.price}` : ""}
+                    </span>
+                  )}
+                </span>
               </button>
               <div className="flex items-center gap-3">
                 <button
@@ -125,7 +147,7 @@ export function ShelfDetail({ shelf, userId, onBack, onSelectItem }: Props) {
                   onClick={() => handleAdjust(entry.id, -1)}
                   disabled={pendingId === entry.id || entry.quantity <= 0}
                   aria-label={`Decrease ${entry.item.name}`}
-                  className="flex h-7 w-7 items-center justify-center rounded-full border border-black/10 text-sm leading-none hover:bg-black/[.05] disabled:opacity-30 dark:border-white/15 dark:hover:bg-white/[.08]"
+                  className="flex h-7 w-7 items-center justify-center rounded-full border border-linen-border text-sm leading-none transition-colors hover:bg-herb-tint disabled:opacity-30"
                 >
                   −
                 </button>
@@ -133,7 +155,7 @@ export function ShelfDetail({ shelf, userId, onBack, onSelectItem }: Props) {
                   type="button"
                   onClick={() => handleSetQuantity(entry)}
                   disabled={pendingId === entry.id}
-                  className="w-16 text-center text-xs text-black/40 hover:text-black/70 disabled:opacity-30 dark:text-white/40 dark:hover:text-white/70"
+                  className="font-label w-16 text-center text-xs text-charcoal-soft transition-colors hover:text-herb disabled:opacity-30"
                 >
                   {entry.quantity}
                   {entry.unit ? ` ${entry.unit}` : ""}
@@ -143,7 +165,7 @@ export function ShelfDetail({ shelf, userId, onBack, onSelectItem }: Props) {
                   onClick={() => handleAdjust(entry.id, 1)}
                   disabled={pendingId === entry.id}
                   aria-label={`Increase ${entry.item.name}`}
-                  className="flex h-7 w-7 items-center justify-center rounded-full border border-black/10 text-sm leading-none hover:bg-black/[.05] disabled:opacity-30 dark:border-white/15 dark:hover:bg-white/[.08]"
+                  className="flex h-7 w-7 items-center justify-center rounded-full border border-linen-border text-sm leading-none transition-colors hover:bg-herb-tint disabled:opacity-30"
                 >
                   +
                 </button>
@@ -153,7 +175,7 @@ export function ShelfDetail({ shelf, userId, onBack, onSelectItem }: Props) {
                     setRemovingId(removingId === entry.id ? null : entry.id)
                   }
                   disabled={pendingId === entry.id}
-                  className="text-xs text-black/40 hover:text-red-600 disabled:opacity-30 dark:text-white/40 dark:hover:text-red-400"
+                  className="font-label text-xs uppercase tracking-wide text-charcoal-soft transition-colors hover:text-danger disabled:opacity-30"
                 >
                   Remove
                 </button>
@@ -161,8 +183,8 @@ export function ShelfDetail({ shelf, userId, onBack, onSelectItem }: Props) {
             </div>
 
             {removingId === entry.id && (
-              <div className="flex flex-wrap items-center gap-2 rounded-lg bg-black/[.03] p-2 dark:bg-white/[.05]">
-                <span className="text-xs text-black/40 dark:text-white/40">
+              <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-expired-tint p-3">
+                <span className="font-label text-xs uppercase tracking-wide text-charcoal-soft">
                   Why&apos;s it going?
                 </span>
                 {WASTE_REASONS.map((reason) => (
@@ -171,7 +193,7 @@ export function ShelfDetail({ shelf, userId, onBack, onSelectItem }: Props) {
                     type="button"
                     onClick={() => handleRemoveWithReason(entry, reason.value)}
                     disabled={pendingId === entry.id}
-                    className="rounded-full border border-black/10 px-3 py-1 text-xs hover:bg-black/[.05] disabled:opacity-30 dark:border-white/15 dark:hover:bg-white/[.08]"
+                    className="rounded-full border border-linen-border bg-linen-card px-3 py-1 text-xs font-medium transition-colors hover:bg-herb-tint disabled:opacity-30"
                   >
                     {reason.label}
                   </button>
@@ -179,7 +201,7 @@ export function ShelfDetail({ shelf, userId, onBack, onSelectItem }: Props) {
                 <button
                   type="button"
                   onClick={() => setRemovingId(null)}
-                  className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+                  className="font-label text-xs uppercase tracking-wide text-charcoal-soft transition-colors hover:text-charcoal"
                 >
                   Never mind
                 </button>
@@ -189,7 +211,7 @@ export function ShelfDetail({ shelf, userId, onBack, onSelectItem }: Props) {
         ))}
       </ul>
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <AddStockItemForm userId={userId} onAddStock={addStock} />
     </div>

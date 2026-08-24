@@ -93,6 +93,9 @@ export function RecipeForm({
     onDone(result.recipe);
   }
 
+  const inputClass =
+    "rounded-2xl border border-linen-border bg-linen-card px-4 py-2.5 text-sm outline-none placeholder:text-charcoal-soft/60 focus:border-herb focus:ring-2 focus:ring-herb/20";
+
   const photoField = (
     <div className="flex flex-col gap-2">
       {photoUrl && (
@@ -100,7 +103,7 @@ export function RecipeForm({
         <img
           src={photoUrl}
           alt=""
-          className="h-40 w-full rounded-lg object-cover"
+          className="h-40 w-full rounded-2xl object-cover"
         />
       )}
       <input
@@ -111,15 +114,9 @@ export function RecipeForm({
         className="text-sm"
       />
       {uploadingPhoto && (
-        <p className="text-xs text-black/40 dark:text-white/40">
-          Uploading…
-        </p>
+        <p className="text-xs text-charcoal-soft">Uploading…</p>
       )}
-      {photoError && (
-        <p className="text-sm text-red-600 dark:text-red-400">
-          {photoError}
-        </p>
-      )}
+      {photoError && <p className="text-sm text-danger">{photoError}</p>}
     </div>
   );
 
@@ -128,11 +125,11 @@ export function RecipeForm({
       <header>
         <button
           onClick={onBack}
-          className="mb-1 text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+          className="font-label mb-1 text-xs uppercase tracking-wide text-charcoal-soft transition-colors hover:text-herb"
         >
           ← Recipes
         </button>
-        <h1 className="text-2xl font-semibold">
+        <h1 className="font-display text-3xl font-semibold tracking-tight">
           {recipe ? "Edit recipe" : "Create recipe"}
         </h1>
       </header>
@@ -144,21 +141,17 @@ export function RecipeForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Recipe name"
-            className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
+            className={inputClass}
           />
           {photoField}
           <button
             type="submit"
             disabled={creating || uploadingPhoto}
-            className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="rounded-full bg-herb px-4 py-2.5 text-sm font-semibold text-linen-card shadow-sm transition-colors hover:bg-herb-dark disabled:opacity-50"
           >
             {creating ? "Creating…" : "Create recipe"}
           </button>
-          {createError && (
-            <p className="text-sm text-red-600 dark:text-red-400">
-              {createError}
-            </p>
-          )}
+          {createError && <p className="text-sm text-danger">{createError}</p>}
         </form>
       ) : (
         <>
@@ -167,16 +160,16 @@ export function RecipeForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Recipe name"
-            className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
+            className={inputClass}
           />
           {photoField}
 
-          <div className="flex flex-col gap-2 border-y border-black/10 py-6 dark:border-white/15">
-            <h2 className="text-xs font-medium uppercase tracking-wide text-black/40 dark:text-white/40">
+          <div className="flex flex-col gap-2 rounded-3xl border border-linen-border bg-linen-card p-4 shadow-sm">
+            <h2 className="font-label text-xs uppercase tracking-widest text-charcoal-soft">
               Ingredients
             </h2>
             {loaded && ingredients.length === 0 && (
-              <p className="text-sm text-black/40 dark:text-white/40">
+              <p className="text-sm text-charcoal-soft">
                 No ingredients yet. Add one below.
               </p>
             )}
@@ -184,10 +177,10 @@ export function RecipeForm({
               {ingredients.map((ingredient) => (
                 <li
                   key={ingredient.id}
-                  className="flex items-center justify-between rounded-lg px-2 py-2"
+                  className="flex items-center justify-between rounded-xl px-2 py-2"
                 >
                   <span className="text-sm">{ingredient.item.name}</span>
-                  <span className="text-xs text-black/40 dark:text-white/40">
+                  <span className="font-label text-xs text-charcoal-soft">
                     {ingredient.quantity}
                     {ingredient.unit ? ` ${ingredient.unit}` : ""}
                   </span>
@@ -204,7 +197,7 @@ export function RecipeForm({
               value={method}
               onChange={(e) => setMethod(e.target.value)}
               placeholder="Method / steps"
-              className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
+              className={inputClass}
             />
             <input
               type="number"
@@ -213,28 +206,25 @@ export function RecipeForm({
               value={servings}
               onChange={(e) => setServings(e.target.value)}
               placeholder="Servings (optional)"
-              className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
+              className={inputClass}
             />
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
                 checked={isPublic}
                 onChange={(e) => setIsPublic(e.target.checked)}
+                className="accent-herb"
               />
               Make this recipe public
             </label>
             <button
               type="submit"
               disabled={saving || uploadingPhoto}
-              className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="rounded-full bg-herb px-4 py-2.5 text-sm font-semibold text-linen-card shadow-sm transition-colors hover:bg-herb-dark disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save changes"}
             </button>
-            {saveError && (
-              <p className="text-sm text-red-600 dark:text-red-400">
-                {saveError}
-              </p>
-            )}
+            {saveError && <p className="text-sm text-danger">{saveError}</p>}
           </form>
         </>
       )}

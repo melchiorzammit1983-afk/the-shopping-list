@@ -27,18 +27,31 @@ export function useShelves(roomId: string | null) {
   }, [refresh]);
 
   const createShelf = useCallback(
-    async (name: string) => {
+    async (name: string, type: string | null = null) => {
       if (!roomId) return { error: "No room selected" };
       const trimmedName = name.trim();
       if (!trimmedName) return { error: "Name is required" };
       const { error } = await getSupabaseClient()
         .from("shelves")
-        .insert({ room_id: roomId, name: trimmedName });
+        .insert({ room_id: roomId, name: trimmedName, type });
       if (error) return { error: error.message };
       await refresh();
       return { error: null };
     },
     [roomId, refresh]
+  );
+
+  const setShelfType = useCallback(
+    async (shelfId: string, type: string | null) => {
+      const { error } = await getSupabaseClient()
+        .from("shelves")
+        .update({ type })
+        .eq("id", shelfId);
+      if (error) return { error: error.message };
+      await refresh();
+      return { error: null };
+    },
+    [refresh]
   );
 
   const renameShelf = useCallback(
@@ -120,5 +133,6 @@ export function useShelves(roomId: string | null) {
     renameShelf,
     deleteShelf,
     emptyShelf,
+    setShelfType,
   };
 }
