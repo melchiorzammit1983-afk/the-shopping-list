@@ -49,5 +49,18 @@ export function useWasteLog(userId: string | null) {
     [refresh]
   );
 
-  return { entries, loaded, logWaste };
+  const clearAll = useCallback(
+    async (userId: string) => {
+      const { error } = await getSupabaseClient()
+        .from("waste_log")
+        .delete()
+        .eq("removed_by", userId);
+      if (error) return { error: error.message };
+      await refresh();
+      return { error: null };
+    },
+    [refresh]
+  );
+
+  return { entries, loaded, logWaste, clearAll };
 }
