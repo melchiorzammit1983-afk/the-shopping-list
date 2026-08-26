@@ -91,9 +91,12 @@ export function AddIngredientForm({ onAddIngredient }: Props) {
     setUnit("");
   }
 
+  const inputClass =
+    "rounded-2xl border border-linen-border bg-linen-card px-4 py-2.5 text-sm outline-none placeholder:text-charcoal-soft/60 focus:border-herb focus:ring-2 focus:ring-herb/20";
+
   return (
-    <div className="flex flex-col gap-4 border-t border-black/10 pt-6 dark:border-white/15">
-      <h2 className="text-xs font-medium uppercase tracking-wide text-black/40 dark:text-white/40">
+    <div className="flex flex-col gap-4 border-t border-linen-border pt-6">
+      <h2 className="font-label text-xs uppercase tracking-widest text-charcoal-soft">
         Add ingredient
       </h2>
 
@@ -108,11 +111,11 @@ export function AddIngredientForm({ onAddIngredient }: Props) {
             setSelected(null);
           }}
           placeholder="Ingredient name"
-          className="flex-1 rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
+          className={`flex-1 ${inputClass}`}
         />
         <button
           type="submit"
-          className="rounded-lg border border-black/10 px-4 py-2 text-sm font-medium hover:bg-black/[.03] dark:border-white/15 dark:hover:bg-white/[.05]"
+          className="rounded-full border border-linen-border bg-linen-card px-4 py-2 text-sm font-medium transition-colors hover:bg-herb-tint"
         >
           Search
         </button>
@@ -122,7 +125,7 @@ export function AddIngredientForm({ onAddIngredient }: Props) {
         <div className="flex flex-col gap-2">
           {results.length > 0 ? (
             <>
-              <p className="text-xs text-black/40 dark:text-white/40">
+              <p className="text-xs text-charcoal-soft">
                 Matches found — pick one, or create a new item below.
               </p>
               <ul className="flex flex-col gap-1">
@@ -131,15 +134,15 @@ export function AddIngredientForm({ onAddIngredient }: Props) {
                     <button
                       type="button"
                       onClick={() => selectExisting(item)}
-                      className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${
+                      className={`w-full rounded-2xl border px-3 py-2 text-left text-sm transition-colors ${
                         selected?.id === item.id
-                          ? "border-black bg-black/[.03] dark:border-white dark:bg-white/[.08]"
-                          : "border-black/10 hover:bg-black/[.03] dark:border-white/15 dark:hover:bg-white/[.05]"
+                          ? "border-herb bg-herb-tint"
+                          : "border-linen-border bg-linen-card hover:bg-herb-tint"
                       }`}
                     >
                       {item.name}
                       {item.unit && (
-                        <span className="ml-2 text-xs text-black/40 dark:text-white/40">
+                        <span className="font-label ml-2 text-xs text-charcoal-soft">
                           ({item.unit})
                         </span>
                       )}
@@ -149,7 +152,7 @@ export function AddIngredientForm({ onAddIngredient }: Props) {
               </ul>
             </>
           ) : (
-            <p className="text-xs text-black/40 dark:text-white/40">
+            <p className="text-xs text-charcoal-soft">
               No matches — this will create a new item.
             </p>
           )}
@@ -160,7 +163,7 @@ export function AddIngredientForm({ onAddIngredient }: Props) {
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               placeholder="Category (optional)"
-              className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
+              className={inputClass}
             />
           )}
 
@@ -172,19 +175,19 @@ export function AddIngredientForm({ onAddIngredient }: Props) {
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               placeholder="Quantity, e.g. 500 or 500g"
-              className="w-36 rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
+              className={`w-36 ${inputClass}`}
             />
             <input
               type="text"
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
               placeholder="Unit, e.g. g / cups"
-              className="w-32 rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
+              className={`w-32 ${inputClass}`}
             />
             <button
               type="submit"
               disabled={pending}
-              className="flex-1 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="flex-1 rounded-full bg-herb px-4 py-2.5 text-sm font-semibold text-linen-card shadow-sm transition-colors hover:bg-herb-dark disabled:opacity-50"
             >
               {pending ? "Adding…" : "Add"}
             </button>
@@ -192,7 +195,7 @@ export function AddIngredientForm({ onAddIngredient }: Props) {
         </div>
       )}
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

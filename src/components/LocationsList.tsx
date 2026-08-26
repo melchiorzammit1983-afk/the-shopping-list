@@ -47,29 +47,29 @@ export function LocationsList({
     <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-10">
       <header className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Your locations</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">
+            Your kitchen
+          </h1>
           {userEmail && (
-            <p className="text-sm text-black/50 dark:text-white/50">
-              {userEmail}
-            </p>
+            <p className="mt-1 text-sm text-charcoal-soft">{userEmail}</p>
           )}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 pt-1">
           <button
             onClick={onGoToRecipes}
-            className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+            className="font-label text-xs uppercase tracking-wide text-charcoal-soft transition-colors hover:text-herb"
           >
             Recipes
           </button>
           <button
             onClick={onGoToWasteLog}
-            className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+            className="font-label text-xs uppercase tracking-wide text-charcoal-soft transition-colors hover:text-herb"
           >
             Waste Log
           </button>
           <button
             onClick={onLogOut}
-            className="text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+            className="font-label text-xs uppercase tracking-wide text-charcoal-soft transition-colors hover:text-danger"
           >
             Log out
           </button>
@@ -77,22 +77,24 @@ export function LocationsList({
       </header>
 
       {loaded && locations.length === 0 && (
-        <p className="text-sm text-black/40 dark:text-white/40">
-          You don&apos;t have any locations yet. Add one below.
+        <p className="text-sm text-charcoal-soft">
+          No locations yet — add your first one below and start stocking up.
         </p>
       )}
 
-      <ul className="flex flex-col gap-1">
+      <ul className="flex flex-col gap-2">
         {locations.map((location) => (
           <li key={location.id}>
             <button
               type="button"
               onClick={() => onSelectLocation(location)}
-              className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left hover:bg-black/[.03] dark:hover:bg-white/[.05]"
+              className="flex w-full items-center justify-between rounded-3xl border border-linen-border bg-linen-card px-5 py-4 text-left shadow-sm transition-colors hover:border-herb/40 hover:bg-herb-tint"
             >
-              <span className="text-sm">{location.name}</span>
+              <span className="font-display text-lg font-semibold">
+                {location.name}
+              </span>
               {location.type && (
-                <span className="text-xs text-black/40 dark:text-white/40">
+                <span className="font-label text-xs uppercase tracking-wide text-charcoal-soft">
                   {location.type}
                 </span>
               )}
@@ -103,9 +105,9 @@ export function LocationsList({
 
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-2 border-t border-black/10 pt-6 dark:border-white/15"
+        className="flex flex-col gap-2 border-t border-linen-border pt-6"
       >
-        <h2 className="text-xs font-medium uppercase tracking-wide text-black/40 dark:text-white/40">
+        <h2 className="font-label text-xs uppercase tracking-widest text-charcoal-soft">
           Add a location
         </h2>
         <input
@@ -114,25 +116,23 @@ export function LocationsList({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name, e.g. Home"
-          className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
+          className="rounded-2xl border border-linen-border bg-linen-card px-4 py-2.5 text-sm outline-none placeholder:text-charcoal-soft/60 focus:border-herb focus:ring-2 focus:ring-herb/20"
         />
         <input
           type="text"
           value={type}
           onChange={(e) => setType(e.target.value)}
           placeholder="Type, e.g. household, shop, restaurant (optional)"
-          className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm outline-none focus:border-black/30 dark:border-white/15 dark:bg-white/5 dark:focus:border-white/30"
+          className="rounded-2xl border border-linen-border bg-linen-card px-4 py-2.5 text-sm outline-none placeholder:text-charcoal-soft/60 focus:border-herb focus:ring-2 focus:ring-herb/20"
         />
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="rounded-full bg-herb px-4 py-2.5 text-sm font-semibold text-linen-card shadow-sm transition-colors hover:bg-herb-dark disabled:opacity-50"
         >
           {pending ? "Adding…" : "Add location"}
         </button>
-        {error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        )}
+        {error && <p className="text-sm text-danger">{error}</p>}
       </form>
     </div>
   );

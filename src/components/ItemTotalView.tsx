@@ -16,52 +16,59 @@ export function ItemTotalView({ item, onBack }: Props) {
       <header>
         <button
           onClick={onBack}
-          className="mb-1 text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+          className="font-label mb-1 text-xs uppercase tracking-wide text-charcoal-soft transition-colors hover:text-herb"
         >
           ← Back
         </button>
-        <h1 className="text-2xl font-semibold">{item.name}</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">
+          {item.name}
+        </h1>
       </header>
 
-      {item.image_url && (
+      {item.image_url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={item.image_url}
           alt=""
-          className="h-48 w-full rounded-lg object-cover"
+          className="h-48 w-full rounded-3xl object-cover"
         />
+      ) : (
+        <div className="flex h-48 w-full items-center justify-center rounded-3xl bg-linen-card text-4xl">
+          🫙
+        </div>
       )}
 
-      <div className="flex flex-col gap-1">
-        <h2 className="text-xs font-medium uppercase tracking-wide text-black/40 dark:text-white/40">
+      <div className="flex flex-col gap-1 rounded-3xl border border-linen-border bg-linen-card p-4 shadow-sm">
+        <h2 className="font-label text-xs uppercase tracking-widest text-charcoal-soft">
           Total across all shelves
         </h2>
         {loaded && totals.length === 0 && (
-          <p className="text-sm text-black/40 dark:text-white/40">
-            None in stock.
-          </p>
+          <p className="text-sm text-charcoal-soft">None in stock.</p>
         )}
         {totals.map((total) => (
-          <p key={total.label} className="text-lg font-semibold">
-            {total.amount} {total.label}
+          <p key={total.label} className="font-display text-2xl font-semibold">
+            {total.amount}{" "}
+            <span className="font-label text-base font-normal text-charcoal-soft">
+              {total.label}
+            </span>
           </p>
         ))}
       </div>
 
-      <div className="flex flex-col gap-2 border-t border-black/10 pt-6 dark:border-white/15">
-        <h2 className="text-xs font-medium uppercase tracking-wide text-black/40 dark:text-white/40">
+      <div className="flex flex-col gap-2 border-t border-linen-border pt-6">
+        <h2 className="font-label text-xs uppercase tracking-widest text-charcoal-soft">
           Breakdown
         </h2>
         <ul className="flex flex-col gap-1">
           {breakdown.map((row) => (
             <li
               key={row.entryId}
-              className="flex items-center justify-between rounded-lg px-2 py-2"
+              className="flex items-center justify-between rounded-2xl px-2 py-2"
             >
               <span className="text-sm">
                 {row.locationName} · {row.roomName} · {row.shelfName}
               </span>
-              <span className="text-xs text-black/40 dark:text-white/40">
+              <span className="font-label text-xs text-charcoal-soft">
                 {row.quantity}
                 {row.unit ? ` ${row.unit}` : ""}
               </span>

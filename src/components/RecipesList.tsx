@@ -24,40 +24,44 @@ export function RecipesList({
         <div>
           <button
             onClick={onGoToLocations}
-            className="mb-1 text-xs text-black/40 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+            className="font-label mb-1 text-xs uppercase tracking-wide text-charcoal-soft transition-colors hover:text-herb"
           >
             ← Locations
           </button>
-          <h1 className="text-2xl font-semibold">Recipes</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">
+            Recipes
+          </h1>
         </div>
         <button
           onClick={onCreateRecipe}
-          className="rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+          className="rounded-full bg-herb px-4 py-2 text-sm font-semibold text-linen-card shadow-sm transition-colors hover:bg-herb-dark"
         >
           Create recipe
         </button>
       </header>
 
       <div className="flex flex-col gap-2">
-        <h2 className="text-xs font-medium uppercase tracking-wide text-black/40 dark:text-white/40">
+        <h2 className="font-label text-xs uppercase tracking-widest text-charcoal-soft">
           My Recipes
         </h2>
         {loaded && myRecipes.length === 0 && (
-          <p className="text-sm text-black/40 dark:text-white/40">
+          <p className="text-sm text-charcoal-soft">
             You haven&apos;t created any recipes yet.
           </p>
         )}
-        <ul className="flex flex-col gap-1">
+        <ul className="flex flex-col gap-2">
           {myRecipes.map((recipe) => (
             <li key={recipe.id}>
               <button
                 type="button"
                 onClick={() => onSelectRecipe(recipe)}
-                className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left hover:bg-black/[.03] dark:hover:bg-white/[.05]"
+                className="flex w-full items-center justify-between rounded-3xl border border-linen-border bg-linen-card px-5 py-4 text-left shadow-sm transition-colors hover:border-herb/40 hover:bg-herb-tint"
               >
-                <span className="text-sm">{recipe.name}</span>
+                <span className="font-display text-lg font-semibold">
+                  {recipe.name}
+                </span>
                 {recipe.is_public && (
-                  <span className="text-xs text-black/40 dark:text-white/40">
+                  <span className="font-label rounded-full bg-butter-tint px-2.5 py-1 text-[10px] uppercase tracking-wide text-butter-dark">
                     Public
                   </span>
                 )}
@@ -67,24 +71,26 @@ export function RecipesList({
         </ul>
       </div>
 
-      <div className="flex flex-col gap-2 border-t border-black/10 pt-6 dark:border-white/15">
-        <h2 className="text-xs font-medium uppercase tracking-wide text-black/40 dark:text-white/40">
+      <div className="flex flex-col gap-2 border-t border-linen-border pt-6">
+        <h2 className="font-label text-xs uppercase tracking-widest text-charcoal-soft">
           Shared Recipes
         </h2>
         {loaded && sharedRecipes.length === 0 && (
-          <p className="text-sm text-black/40 dark:text-white/40">
+          <p className="text-sm text-charcoal-soft">
             No public recipes from other users yet.
           </p>
         )}
-        <ul className="flex flex-col gap-1">
+        <ul className="flex flex-col gap-2">
           {sharedRecipes.map((recipe) => (
             <li key={recipe.id}>
               <button
                 type="button"
                 onClick={() => onSelectRecipe(recipe)}
-                className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left hover:bg-black/[.03] dark:hover:bg-white/[.05]"
+                className="flex w-full items-center justify-between rounded-3xl border border-linen-border bg-linen-card px-5 py-4 text-left shadow-sm transition-colors hover:border-herb/40 hover:bg-herb-tint"
               >
-                <span className="text-sm">{recipe.name}</span>
+                <span className="font-display text-lg font-semibold">
+                  {recipe.name}
+                </span>
               </button>
             </li>
           ))}
