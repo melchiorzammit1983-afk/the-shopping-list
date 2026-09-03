@@ -12,11 +12,14 @@ import { RecipesList } from "@/components/RecipesList";
 import { RecipeDetail } from "@/components/RecipeDetail";
 import { RecipeForm } from "@/components/RecipeForm";
 import { WasteLogView } from "@/components/WasteLogView";
+import { ShoppingListsList } from "@/components/ShoppingListsList";
+import { ShoppingListDetail } from "@/components/ShoppingListDetail";
 import type { Location } from "@/types/location";
 import type { Room } from "@/types/room";
 import type { Shelf } from "@/types/shelf";
 import type { Item } from "@/types/item";
 import type { Recipe } from "@/types/recipe";
+import type { ShoppingList } from "@/types/shoppingList";
 
 type View =
   | { kind: "locations" }
@@ -33,7 +36,9 @@ type View =
   | { kind: "recipes" }
   | { kind: "recipe-detail"; recipe: Recipe }
   | { kind: "recipe-form"; recipe: Recipe | null }
-  | { kind: "waste-log" };
+  | { kind: "waste-log" }
+  | { kind: "shopping-lists" }
+  | { kind: "shopping-list-detail"; shoppingList: ShoppingList };
 
 export default function Home() {
   const { user, loaded, signUpWithPassword, signInWithPassword, signOut } =
@@ -151,6 +156,25 @@ export default function Home() {
           onBack={() => setView({ kind: "locations" })}
         />
       );
+    case "shopping-lists":
+      return (
+        <ShoppingListsList
+          userId={user.id}
+          onBack={() => setView({ kind: "locations" })}
+          onSelectShoppingList={(shoppingList) =>
+            setView({ kind: "shopping-list-detail", shoppingList })
+          }
+        />
+      );
+    case "shopping-list-detail":
+      return (
+        <ShoppingListDetail
+          shoppingList={view.shoppingList}
+          userId={user.id}
+          onBack={() => setView({ kind: "shopping-lists" })}
+          onDeleted={() => setView({ kind: "shopping-lists" })}
+        />
+      );
     default:
       return (
         <LocationsList
@@ -160,6 +184,7 @@ export default function Home() {
           onSelectLocation={(location) =>
             setView({ kind: "location-detail", location })
           }
+          onGoToShoppingLists={() => setView({ kind: "shopping-lists" })}
           onGoToRecipes={() => setView({ kind: "recipes" })}
           onGoToWasteLog={() => setView({ kind: "waste-log" })}
         />
