@@ -14,6 +14,7 @@ import { RecipeForm } from "@/components/RecipeForm";
 import { WasteLogView } from "@/components/WasteLogView";
 import { ShoppingListsList } from "@/components/ShoppingListsList";
 import { ShoppingListDetail } from "@/components/ShoppingListDetail";
+import { ProductCatalogue } from "@/components/ProductCatalogue";
 import type { Location } from "@/types/location";
 import type { Room } from "@/types/room";
 import type { Shelf } from "@/types/shelf";
@@ -38,6 +39,7 @@ type View =
   | { kind: "recipe-form"; recipe: Recipe | null }
   | { kind: "waste-log" }
   | { kind: "shopping-lists" }
+  | { kind: "products" }
   | { kind: "shopping-list-detail"; shoppingList: ShoppingList };
 
 export default function Home() {
@@ -166,6 +168,14 @@ export default function Home() {
           }
         />
       );
+    case "products":
+      return (
+        <ProductCatalogue
+          userId={user.id}
+          onBack={() => setView({ kind: "locations" })}
+          onGoToInventory={() => setView({ kind: "locations" })}
+        />
+      );
     case "shopping-list-detail":
       return (
         <ShoppingListDetail
@@ -185,6 +195,7 @@ export default function Home() {
             setView({ kind: "location-detail", location })
           }
           onGoToShoppingLists={() => setView({ kind: "shopping-lists" })}
+          onGoToProducts={() => setView({ kind: "products" })}
           onGoToRecipes={() => setView({ kind: "recipes" })}
           onGoToWasteLog={() => setView({ kind: "waste-log" })}
         />

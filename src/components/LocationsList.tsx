@@ -12,6 +12,7 @@ type Props = {
   onLogOut: () => void;
   onSelectLocation: (location: Location) => void;
   onGoToShoppingLists: () => void;
+  onGoToProducts: () => void;
   onGoToRecipes: () => void;
   onGoToWasteLog: () => void;
 };
@@ -22,6 +23,7 @@ export function LocationsList({
   onLogOut,
   onSelectLocation,
   onGoToShoppingLists,
+  onGoToProducts,
   onGoToRecipes,
   onGoToWasteLog,
 }: Props) {
@@ -56,7 +58,13 @@ export function LocationsList({
             <p className="mt-1 text-sm text-charcoal-soft">{userEmail}</p>
           )}
         </div>
-        <div className="flex items-center gap-4 pt-1">
+        <div className="flex max-w-56 flex-wrap items-center justify-end gap-x-4 gap-y-2 pt-1">
+          <button
+            onClick={onGoToProducts}
+            className="font-label text-xs uppercase tracking-wide text-charcoal-soft transition-colors hover:text-herb"
+          >
+            Products
+          </button>
           <button
             onClick={onGoToShoppingLists}
             className="font-label text-xs uppercase tracking-wide text-charcoal-soft transition-colors hover:text-herb"
