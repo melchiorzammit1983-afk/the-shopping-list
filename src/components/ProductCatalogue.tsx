@@ -5,6 +5,7 @@ import type { ChangeEvent, FormEvent } from "react";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { useItemCatalog } from "@/hooks/useItemCatalog";
 import { usePhotoUpload } from "@/hooks/usePhotoUpload";
+import type { ExternalProduct } from "@/lib/productLookup";
 import type { BarcodeType, Item, ProductDraft } from "@/types/item";
 
 type Props = {
@@ -23,6 +24,7 @@ const emptyDraft: ProductDraft = {
   packageUnit: "",
   barcodeValue: "",
   barcodeType: "other",
+  dataSource: "manual",
 };
 
 function draftFromProduct(product: Item): ProductDraft {
@@ -36,11 +38,28 @@ function draftFromProduct(product: Item): ProductDraft {
     packageUnit: product.package_unit ?? "",
     barcodeValue: product.barcodes?.[0]?.barcode_value ?? "",
     barcodeType: product.barcodes?.[0]?.barcode_type ?? "other",
+    dataSource:
+      product.data_source === "open_food_facts" ? "open_food_facts" : "manual",
+  };
+}
+
+function draftFromExternalProduct(product: ExternalProduct): ProductDraft {
+  return {
+    name: product.name,
+    canonicalName: product.canonicalName,
+    brand: product.brand,
+    variant: product.variant,
+    category: product.category,
+    packageQuantity: product.packageQuantity,
+    packageUnit: product.packageUnit,
+    barcodeValue: product.barcode,
+    barcodeType: product.barcodeType,
+    dataSource: product.dataSource,
   };
 }
 
 export function ProductCatalogue({ userId, onBack, onGoToInventory }: Props) {
-  const { searchItems, searchProductByBarcode, createProduct, updateProduct } = useItemCatalog();
+  const { searchItems, lookupProductByBarcode, createProduct, updateProduct } = useItemCatalog();
   const { uploadPhoto } = usePhotoUpload(userId, "item-photos");
   const [mode, setMode] = useState<"barcode" | "manual">("barcode");
   const [stage, setStage] = useState<"search" | "edit" | "review" | "done">("search");
@@ -54,6 +73,12 @@ export function ProductCatalogue({ userId, onBack, onGoToInventory }: Props) {
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [barcodeFile, setBarcodeFile] = useState<File | null>(null);
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
+  const [externalImageUrl, setExternalImageUrl] = useState<string | null>(null);
+  const [lookupNotice, setLookupNotice] = useState<
+    "not_found" | "unavailable" | "invalid" | null
+  >(null);
+  const [lookupMessage, setLookupMessage] = useState("");
+  const [pendingBarcode, setPendingBarcode] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
@@ -69,6 +94,10 @@ export function ProductCatalogue({ userId, onBack, onGoToInventory }: Props) {
     setFrontFile(null);
     setBarcodeFile(null);
     setFrontPreview(null);
+    setExternalImageUrl(null);
+    setLookupNotice(null);
+    setLookupMessage("");
+    setPendingBarcode("");
     setError("");
   }, []);
 
@@ -79,21 +108,33 @@ export function ProductCatalogue({ userId, onBack, onGoToInventory }: Props) {
   async function searchBarcode(value = query) {
     setPending(true);
     setError("");
-    const result = await searchProductByBarcode(value);
+    const result = await lookupProductByBarcode(value);
     setPending(false);
     setSearched(true);
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
-    if (result.product) {
+    if (result.status === "local") {
       setExisting(result.product);
       setDraft(draftFromProduct(result.product));
+      setExternalImageUrl(null);
       setStage("review");
       return;
     }
-    setDraft({ ...emptyDraft, barcodeValue: value.trim() });
-    setStage("edit");
+    if (result.status === "found") {
+      setExisting(null);
+      setDraft(draftFromExternalProduct(result.product));
+      setExternalImageUrl(result.product.imageUrl);
+      setPendingBarcode(result.product.barcode);
+      setStage("review");
+      return;
+    }
+
+    const barcode = value.trim();
+    setPendingBarcode(barcode);
+    setDraft({ ...emptyDraft, barcodeValue: barcode });
+    setLookupNotice(result.status);
+    setLookupMessage(
+      result.status === "not_found" ? "Product not found." : result.message
+    );
+    setStage("search");
   }
 
   async function handleSearch(e: FormEvent) {
@@ -122,8 +163,33 @@ export function ProductCatalogue({ userId, onBack, onGoToInventory }: Props) {
 
   function createManual() {
     setExisting(null);
-    setDraft({ ...emptyDraft, name: query.trim(), canonicalName: query.trim() });
+    setDraft({
+      ...emptyDraft,
+      name: query.trim(),
+      canonicalName: query.trim(),
+      barcodeValue: pendingBarcode,
+    });
+    setExternalImageUrl(null);
     setStage("edit");
+  }
+
+  function createFromBarcode() {
+    setExisting(null);
+    setExternalImageUrl(null);
+    setDraft({ ...emptyDraft, barcodeValue: pendingBarcode });
+    setStage("edit");
+  }
+
+  function switchToManualSearch() {
+    setStage("search");
+    setMode("manual");
+    setQuery("");
+    setResults([]);
+    setSearched(false);
+    setLookupNotice(null);
+    setLookupMessage("");
+    setExisting(null);
+    setExternalImageUrl(null);
   }
 
   function chooseFrontImage(e: ChangeEvent<HTMLInputElement>) {
@@ -165,7 +231,7 @@ export function ProductCatalogue({ userId, onBack, onGoToInventory }: Props) {
     }
     const result = await createProduct(draft, {
       frontImagePath: front.path,
-      frontImageUrl: front.url,
+      frontImageUrl: front.url ?? externalImageUrl,
       barcodeImagePath: barcode.path,
       barcodeImageUrl: barcode.url,
     });
@@ -175,6 +241,8 @@ export function ProductCatalogue({ userId, onBack, onGoToInventory }: Props) {
       return;
     }
     setSaved(result.product);
+    setDraft(draftFromProduct(result.product));
+    setExternalImageUrl(null);
     setStage("done");
   }
 
@@ -198,7 +266,7 @@ export function ProductCatalogue({ userId, onBack, onGoToInventory }: Props) {
   }
 
   const displayProduct = saved ?? existing;
-  const imageUrl = frontPreview ?? displayProduct?.images?.find((image) => image.image_type === "front")?.image_url ?? displayProduct?.image_url;
+  const imageUrl = frontPreview ?? externalImageUrl ?? displayProduct?.images?.find((image) => image.image_type === "front")?.image_url ?? displayProduct?.image_url;
   const canEditExisting = existing?.created_by === userId;
 
   return (
@@ -213,19 +281,36 @@ export function ProductCatalogue({ userId, onBack, onGoToInventory }: Props) {
         <>
           <div className="grid grid-cols-2 gap-2 rounded-3xl bg-herb-tint p-1">
             {(["barcode", "manual"] as const).map((option) => (
-              <button key={option} type="button" onClick={() => { setMode(option); setSearched(false); setResults([]); setError(""); }} className={`rounded-full px-3 py-2 text-sm font-medium ${mode === option ? "bg-linen-card shadow-sm" : "text-charcoal-soft"}`}>
+              <button key={option} type="button" onClick={() => { setMode(option); setSearched(false); setResults([]); setError(""); setLookupNotice(null); setLookupMessage(""); }} className={`rounded-full px-3 py-2 text-sm font-medium ${mode === option ? "bg-linen-card shadow-sm" : "text-charcoal-soft"}`}>
                 {option === "barcode" ? "Scan / barcode" : "Manual search"}
               </button>
             ))}
           </div>
           <form onSubmit={handleSearch} className="flex flex-col gap-3">
-            <input required value={query} onChange={(e) => { setQuery(e.target.value); setSearched(false); }} inputMode={mode === "barcode" ? "numeric" : "search"} placeholder={mode === "barcode" ? "Enter barcode" : "Product or brand"} className="rounded-2xl border border-linen-border bg-linen-card px-4 py-3 text-sm outline-none focus:border-herb focus:ring-2 focus:ring-herb/20" />
+            <input required value={query} onChange={(e) => { setQuery(e.target.value); setSearched(false); setLookupNotice(null); setLookupMessage(""); }} inputMode={mode === "barcode" ? "numeric" : "search"} placeholder={mode === "barcode" ? "Enter barcode" : "Product or brand"} className="rounded-2xl border border-linen-border bg-linen-card px-4 py-3 text-sm outline-none focus:border-herb focus:ring-2 focus:ring-herb/20" />
             <div className="flex gap-2">
               {mode === "barcode" && <button type="button" onClick={() => setScannerOpen(true)} className="flex-1 rounded-full border border-linen-border bg-linen-card px-4 py-2.5 text-sm font-medium">Use camera</button>}
               <button disabled={pending} className="flex-1 rounded-full bg-herb px-4 py-2.5 text-sm font-semibold text-linen-card disabled:opacity-50">{pending ? "Searching…" : "Search"}</button>
             </div>
           </form>
           {scannerOpen && <BarcodeScanner onClose={() => setScannerOpen(false)} onDetected={(value) => { setScannerOpen(false); setQuery(value); void searchBarcode(value); }} />}
+          {mode === "barcode" && lookupNotice && (
+            <div className="flex flex-col gap-3 rounded-3xl border border-linen-border bg-linen-card p-4">
+              <p className="text-sm font-semibold">{lookupMessage}</p>
+              <p className="text-xs text-charcoal-soft">
+                You can still add this product without external data.
+              </p>
+              <button type="button" onClick={createFromBarcode} className="rounded-full bg-herb px-4 py-2.5 text-sm font-semibold text-linen-card">
+                Create product manually
+              </button>
+              <button type="button" onClick={switchToManualSearch} className="rounded-full border border-herb px-4 py-2.5 text-sm font-semibold text-herb">
+                Search manually
+              </button>
+              <button type="button" onClick={resetSearch} className="text-sm text-charcoal-soft">
+                Cancel
+              </button>
+            </div>
+          )}
           {mode === "manual" && searched && (
             <div className="flex flex-col gap-2">
               {results.map((product) => <button key={product.id} type="button" onClick={() => selectExisting(product)} className="rounded-2xl border border-linen-border bg-linen-card px-4 py-3 text-left text-sm hover:bg-herb-tint"><span className="font-semibold">{product.name}</span>{product.brand && <span className="ml-2 text-charcoal-soft">{product.brand}</span>}</button>)}
@@ -256,9 +341,9 @@ export function ProductCatalogue({ userId, onBack, onGoToInventory }: Props) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={imageUrl} alt={draft.name} className="h-48 w-full rounded-2xl object-cover" />
           )}
-          <div><p className="font-label text-xs uppercase tracking-wide text-charcoal-soft">{stage === "done" ? "Saved product" : existing ? "Catalogue match" : "Confirm product"}</p><h2 className="font-display text-2xl font-semibold">{draft.name}</h2>{draft.brand && <p className="text-sm text-charcoal-soft">{draft.brand}{draft.variant ? ` · ${draft.variant}` : ""}</p>}</div>
-          <dl className="grid grid-cols-2 gap-3 text-sm"><div><dt className="text-charcoal-soft">Package</dt><dd>{draft.packageQuantity || draft.packageUnit ? `${draft.packageQuantity} ${draft.packageUnit}`.trim() : "Not set"}</dd></div><div><dt className="text-charcoal-soft">Barcode</dt><dd>{draft.barcodeValue || "Not set"}</dd></div><div><dt className="text-charcoal-soft">Status</dt><dd>{existing ? existing.verification_status.replaceAll("_", " ") : "Ready to verify"}</dd></div><div><dt className="text-charcoal-soft">Source</dt><dd>{existing?.data_source ?? "Manual"}</dd></div></dl>
-          {stage === "review" ? <div className="flex flex-col gap-2">{(!existing || canEditExisting) && <button type="button" onClick={() => setStage("edit")} className="rounded-full border border-linen-border px-4 py-2.5 text-sm font-medium">Edit</button>}<button type="button" onClick={() => void confirmProduct()} disabled={pending} className="rounded-full bg-herb px-4 py-2.5 text-sm font-semibold text-linen-card disabled:opacity-50">{pending ? "Saving…" : "Confirm"}</button><button type="button" onClick={resetSearch} className="text-sm text-charcoal-soft">Cancel / search again</button></div> : <div className="flex flex-col gap-2"><button type="button" disabled title="Shopping-list items are not part of this milestone" className="rounded-full border border-linen-border px-4 py-2.5 text-sm opacity-50">Add to Shopping List — coming next</button><button type="button" onClick={onGoToInventory} className="rounded-full border border-herb px-4 py-2.5 text-sm font-semibold text-herb">Add to Home / Inventory</button><button type="button" onClick={onBack} className="rounded-full bg-herb px-4 py-2.5 text-sm font-semibold text-linen-card">Just Save Product</button></div>}
+          <div><p className="font-label text-xs uppercase tracking-wide text-charcoal-soft">{stage === "done" ? "Saved product" : existing ? "Catalogue match" : draft.dataSource === "open_food_facts" ? "External match" : "Confirm product"}</p><h2 className="font-display text-2xl font-semibold">{draft.name}</h2>{draft.brand && <p className="text-sm text-charcoal-soft">{draft.brand}{draft.variant ? ` · ${draft.variant}` : ""}</p>}</div>
+          <dl className="grid grid-cols-2 gap-3 text-sm"><div><dt className="text-charcoal-soft">Package</dt><dd>{draft.packageQuantity || draft.packageUnit ? `${draft.packageQuantity} ${draft.packageUnit}`.trim() : "Not set"}</dd></div><div><dt className="text-charcoal-soft">Barcode</dt><dd>{draft.barcodeValue || "Not set"}</dd></div><div><dt className="text-charcoal-soft">Status</dt><dd>{existing ? existing.verification_status.replaceAll("_", " ") : draft.dataSource === "open_food_facts" ? "External match · confirmation required" : "Ready to verify"}</dd></div><div><dt className="text-charcoal-soft">Source</dt><dd>{(existing?.data_source ?? draft.dataSource) === "open_food_facts" ? <a href="https://world.openfoodfacts.org" target="_blank" rel="noreferrer" className="text-herb underline">Open Food Facts</a> : "Manual"}</dd></div></dl>
+          {stage === "review" ? <div className="flex flex-col gap-2">{(!existing || canEditExisting) && <button type="button" onClick={() => setStage("edit")} className="rounded-full border border-linen-border px-4 py-2.5 text-sm font-medium">Edit</button>}<button type="button" onClick={() => void confirmProduct()} disabled={pending} className="rounded-full bg-herb px-4 py-2.5 text-sm font-semibold text-linen-card disabled:opacity-50">{pending ? "Saving…" : "Confirm"}</button>{!existing && draft.dataSource === "open_food_facts" && <button type="button" onClick={switchToManualSearch} className="rounded-full border border-herb px-4 py-2.5 text-sm font-semibold text-herb">Search manually instead</button>}<button type="button" onClick={resetSearch} className="text-sm text-charcoal-soft">Cancel / search again</button></div> : <div className="flex flex-col gap-2"><button type="button" disabled title="Shopping-list items are not part of this milestone" className="rounded-full border border-linen-border px-4 py-2.5 text-sm opacity-50">Add to Shopping List — coming next</button><button type="button" onClick={onGoToInventory} className="rounded-full border border-herb px-4 py-2.5 text-sm font-semibold text-herb">Add to Home / Inventory</button><button type="button" onClick={onBack} className="rounded-full bg-herb px-4 py-2.5 text-sm font-semibold text-linen-card">Just Save Product</button></div>}
           {existing && !canEditExisting && stage === "review" && <p className="text-xs text-charcoal-soft">Shared catalogue products can only be edited by their creator.</p>}
         </div>
       )}
