@@ -2,6 +2,9 @@
 
 import { useCallback } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
+import { localFirstLookup } from "@/lib/productLookup/localFirst";
+import { normalizeBarcode } from "@/lib/productLookup/barcodes";
+import type { ExternalLookupResult } from "@/lib/productLookup";
 import type { Item, ProductDraft } from "@/types/item";
 
 type ProductAssets = {
@@ -12,10 +15,6 @@ type ProductAssets = {
 };
 
 const productSelect = "*, barcodes:product_barcodes(*), images:product_images(*)";
-
-export function normalizeBarcode(value: string) {
-  return value.replace(/[^0-9a-z]/gi, "").toUpperCase();
-}
 
 export function useItemCatalog() {
   const searchItems = useCallback(async (query: string) => {
@@ -91,6 +90,61 @@ export function useItemCatalog() {
     return getProduct(data.product_id);
   }, [getProduct]);
 
+  const lookupProductByBarcode = useCallback(async (value: string) => {
+    const normalized = normalizeBarcode(value);
+    if (!normalized) {
+      return { status: "invalid" as const, message: "Enter a barcode" };
+    }
+
+    try {
+      const result = await localFirstLookup(
+        async () => {
+          const local = await searchProductByBarcode(normalized);
+          if (local.error) throw new Error(local.error);
+          return local.product;
+        },
+        async () => {
+          const { data } = await getSupabaseClient().auth.getSession();
+          const token = data.session?.access_token;
+          if (!token) {
+            return {
+              status: "unavailable",
+              message: "Sign in again to search external products.",
+            } satisfies ExternalLookupResult;
+          }
+
+          const response = await fetch(
+            `/api/products/lookup?barcode=${encodeURIComponent(normalized)}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const body = (await response.json()) as Partial<ExternalLookupResult>;
+          if (
+            body.status === "found" ||
+            body.status === "not_found" ||
+            body.status === "invalid" ||
+            body.status === "unavailable"
+          ) {
+            return body as ExternalLookupResult;
+          }
+          return {
+            status: "unavailable",
+            message: "Product lookup is temporarily unavailable.",
+          } satisfies ExternalLookupResult;
+        }
+      );
+
+      if (result.source === "local") {
+        return { status: "local" as const, product: result.value };
+      }
+      return result.value;
+    } catch {
+      return {
+        status: "unavailable" as const,
+        message: "Product lookup is temporarily unavailable.",
+      };
+    }
+  }, [searchProductByBarcode]);
+
   const createProduct = useCallback(async (draft: ProductDraft, assets: ProductAssets) => {
     const quantity = draft.packageQuantity.trim() ? Number(draft.packageQuantity) : null;
     if (!draft.name.trim()) return { product: null, error: "Product name is required" };
@@ -99,7 +153,7 @@ export function useItemCatalog() {
     }
 
     const { data: id, error } = await getSupabaseClient().rpc(
-      "create_product_with_barcode",
+      "create_catalogue_product",
       {
         product_name: draft.name,
         product_canonical_name: draft.canonicalName || draft.name,
@@ -110,6 +164,7 @@ export function useItemCatalog() {
         product_package_unit: draft.packageUnit || null,
         product_barcode_value: normalizeBarcode(draft.barcodeValue) || null,
         product_barcode_type: draft.barcodeValue ? draft.barcodeType : null,
+        product_data_source: draft.dataSource,
         front_image_path: assets.frontImagePath,
         front_image_url: assets.frontImageUrl,
         barcode_image_path: assets.barcodeImagePath,
@@ -119,7 +174,7 @@ export function useItemCatalog() {
     if (error) {
       return {
         product: null,
-        error: error.code === "23505" ? "That barcode already belongs to a product" : error.message,
+        error: error.message,
       };
     }
     return getProduct(id as string);
@@ -148,5 +203,5 @@ export function useItemCatalog() {
     return getProduct(productId);
   }, [getProduct]);
 
-  return { searchItems, createItem, searchProductByBarcode, createProduct, updateProduct };
+  return { searchItems, createItem, lookupProductByBarcode, createProduct, updateProduct };
 }

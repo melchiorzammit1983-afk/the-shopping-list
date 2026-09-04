@@ -51,4 +51,5 @@ export type ProductDraft = {
   packageUnit: string;
   barcodeValue: string;
   barcodeType: BarcodeType;
+  dataSource: "manual" | "open_food_facts";
 };
